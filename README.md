@@ -93,6 +93,12 @@ La simulation des comptes de test et du routage post-login est documentée ici :
 
 - [`docs/mock-auth-routing.md`](docs/mock-auth-routing.md)
 
+Les frontières fonctionnelles définitives entre Article, Catalogue, Stock,
+Entrées, Sorties, Transferts, Inventaires et Lots & Séries sont verrouillées
+ici :
+
+- [`docs/functional-boundaries.md`](docs/functional-boundaries.md)
+
 ## Commandes
 
 ```bash
