@@ -25,18 +25,38 @@ interface ActiveSession {
   selectedOrganization?: MockOrganizationAccess;
 }
 
+type ArticleStatus = "Actif" | "Sous stock" | "Rupture";
+
+interface ArticleRecord {
+  reference: string;
+  designation: string;
+  category: string;
+  family: string;
+  unit: string;
+  averagePrice: string;
+  stock: string;
+  status: ArticleStatus;
+  barcode: string;
+  location: string;
+  icon: string;
+}
+
 const navigationItems = [
   "Tableau de bord",
   "Articles",
+  "Catalogue",
   "Stocks",
   "Entrées",
   "Sorties",
   "Transferts",
   "Inventaires",
+  "Lots & Séries",
+  "Péremptions",
   "Approvisionnements",
   "Achats",
   "Fournisseurs",
   "Entrepôts",
+  "Emplacements",
   "Rapports",
   "Alertes",
   "Paramètres"
@@ -102,6 +122,139 @@ const topArticles = [
   ["Riz 25kg", "87 450 000", "7,0%"],
   ["Huile moteur 5L", "76 540 000", "6,1%"],
   ["Paracétamol 500mg", "54 320 000", "4,3%"]
+];
+
+const articleItems: ArticleRecord[] = [
+  {
+    reference: "PARA-500",
+    designation: "Paracétamol 500mg",
+    category: "Médicaments",
+    family: "Comprimés",
+    unit: "Boîte",
+    averagePrice: "1 250",
+    stock: "2 500",
+    status: "Actif",
+    barcode: "6161101234567",
+    location: "Dakar / A-12",
+    icon: "PARA"
+  },
+  {
+    reference: "GANT-MED-L",
+    designation: "Gants médicaux latex (L)",
+    category: "Consommables",
+    family: "Protection",
+    unit: "Boîte",
+    averagePrice: "2 850",
+    stock: "1 000",
+    status: "Actif",
+    barcode: "6161102234567",
+    location: "Thiès / B-04",
+    icon: "GANT"
+  },
+  {
+    reference: "HUILE-5L",
+    designation: "Huile moteur 5L",
+    category: "Lubrifiants",
+    family: "Maintenance",
+    unit: "Bidon",
+    averagePrice: "8 500",
+    stock: "750",
+    status: "Actif",
+    barcode: "6161103234567",
+    location: "Dakar / C-08",
+    icon: "OIL"
+  },
+  {
+    reference: "CIM-50KG",
+    designation: "Ciment 50kg",
+    category: "Matériaux",
+    family: "Construction",
+    unit: "Sac",
+    averagePrice: "4 200",
+    stock: "300",
+    status: "Sous stock",
+    barcode: "6161104234567",
+    location: "Kaolack / D-02",
+    icon: "CIM"
+  },
+  {
+    reference: "FER-12MM",
+    designation: "Fer à béton 12mm",
+    category: "Matériaux",
+    family: "Construction",
+    unit: "Tige",
+    averagePrice: "7 850",
+    stock: "150",
+    status: "Sous stock",
+    barcode: "6161105234567",
+    location: "Dakar / D-09",
+    icon: "FER"
+  },
+  {
+    reference: "RIZ-25KG",
+    designation: "Riz 25kg",
+    category: "Alimentaire",
+    family: "Denrées",
+    unit: "Sac",
+    averagePrice: "12 500",
+    stock: "0",
+    status: "Rupture",
+    barcode: "6161106234567",
+    location: "Saint-Louis / E-03",
+    icon: "RIZ"
+  },
+  {
+    reference: "CAH-A4-100P",
+    designation: "Cahier A4 100 pages",
+    category: "Fournitures",
+    family: "Papeterie",
+    unit: "Pièce",
+    averagePrice: "650",
+    stock: "5 200",
+    status: "Actif",
+    barcode: "6161107234567",
+    location: "Bénin / F-01",
+    icon: "A4"
+  },
+  {
+    reference: "EAU-0.5L",
+    designation: "Eau minérale 0.5L",
+    category: "Boissons",
+    family: "Consommables",
+    unit: "Bouteille",
+    averagePrice: "200",
+    stock: "3 600",
+    status: "Actif",
+    barcode: "6161108234567",
+    location: "Abidjan / G-10",
+    icon: "EAU"
+  },
+  {
+    reference: "MASQ-CHIR",
+    designation: "Masques chirurgicaux",
+    category: "Consommables",
+    family: "Protection",
+    unit: "Boîte",
+    averagePrice: "1 800",
+    stock: "200",
+    status: "Sous stock",
+    barcode: "6161109234567",
+    location: "Dakar / B-11",
+    icon: "MASK"
+  },
+  {
+    reference: "AMPOULE-LED-12W",
+    designation: "Ampoule LED 12W",
+    category: "Électricité",
+    family: "Éclairage",
+    unit: "Pièce",
+    averagePrice: "2 300",
+    stock: "1 150",
+    status: "Actif",
+    barcode: "6161110234567",
+    location: "Thiès / H-05",
+    icon: "LED"
+  }
 ];
 
 export function App({ model }: AppProps) {
@@ -565,6 +718,8 @@ function DashboardScreen({
   user: MockUser;
 }) {
   const isDashboard = activeNav === "Tableau de bord";
+  const isArticles = activeNav === "Articles";
+  const [selectedArticle, setSelectedArticle] = useState<ArticleRecord | null>(null);
 
   return (
     <main className="erp-shell">
@@ -584,7 +739,12 @@ function DashboardScreen({
             <button
               className={item === activeNav ? "active" : ""}
               key={item}
-              onClick={() => onNav(item)}
+              onClick={() => {
+                onNav(item);
+                if (item !== "Articles") {
+                  setSelectedArticle(null);
+                }
+              }}
               type="button"
             >
               <span>{iconForNav(item)}</span>
@@ -624,17 +784,6 @@ function DashboardScreen({
         </header>
 
         <div className="dashboard-page">
-          <header className="dashboard-header">
-            <div>
-              <h1>{activeNav}</h1>
-              <p>{isDashboard ? "Vue d'ensemble de votre activité" : "Module connecté en données mock, prêt pour les sous-fonctionnalités."}</p>
-            </div>
-            <div>
-              <button type="button">01/05/2024 - 31/05/2024 ◷</button>
-              <button onClick={() => onAction("Personnalisation du dashboard activée.")} type="button">Personnaliser ⚙</button>
-            </div>
-          </header>
-
           {notice ? (
             <p className="workspace-notice">
               {notice}
@@ -642,10 +791,32 @@ function DashboardScreen({
             </p>
           ) : null}
 
-          {isDashboard ? (
-            <DashboardContent model={model} />
+          {isArticles ? (
+            <ArticlesModule
+              article={selectedArticle}
+              onAction={onAction}
+              onBack={() => setSelectedArticle(null)}
+              onOpenArticle={(nextArticle) => setSelectedArticle(nextArticle)}
+            />
           ) : (
-            <ModulePlaceholder moduleName={activeNav} organization={organization} />
+            <>
+              <header className="dashboard-header">
+                <div>
+                  <h1>{activeNav}</h1>
+                  <p>{isDashboard ? "Vue d'ensemble de votre activité" : "Module connecté en données mock, prêt pour les sous-fonctionnalités."}</p>
+                </div>
+                <div>
+                  <button type="button">01/05/2024 - 31/05/2024 ◷</button>
+                  <button onClick={() => onAction("Personnalisation du dashboard activée.")} type="button">Personnaliser ⚙</button>
+                </div>
+              </header>
+
+              {isDashboard ? (
+                <DashboardContent model={model} />
+              ) : (
+                <ModulePlaceholder moduleName={activeNav} organization={organization} />
+              )}
+            </>
           )}
         </div>
       </section>
@@ -742,6 +913,370 @@ function DashboardContent({ model }: { model: GestockViewModel }) {
         ))}
       </section>
     </>
+  );
+}
+
+function ArticlesModule({
+  article,
+  onAction,
+  onBack,
+  onOpenArticle
+}: {
+  article: ArticleRecord | null;
+  onAction: (message: string | null) => void;
+  onBack: () => void;
+  onOpenArticle: (article: ArticleRecord) => void;
+}) {
+  if (article) {
+    return (
+      <ArticleDetail
+        article={article}
+        onAction={onAction}
+        onBack={onBack}
+      />
+    );
+  }
+
+  return (
+    <section className="articles-page">
+      <header className="articles-header">
+        <div>
+          <h1>Articles</h1>
+          <p>Gérez l'ensemble de vos articles et produits.</p>
+        </div>
+        <div>
+          <button onClick={() => onAction("Import d'articles ouvert : CSV, Excel et modèles de colonnes prêts en mock.")} type="button">
+            ⇩ Importer des articles
+          </button>
+          <button className="primary" onClick={() => onAction("Formulaire Nouvel article préparé : informations, codes-barres, stock initial et documents.")} type="button">
+            + Nouvel article
+          </button>
+        </div>
+      </header>
+
+      <section className="article-kpis">
+        {[
+          ["2 356", "Articles actifs", "◇", "green"],
+          ["156", "Sous stock", "△", "orange"],
+          ["28", "Rupture de stock", "△", "red"],
+          ["142", "Prochains à péremption", "□", "purple"],
+          ["98,6%", "Couverture moyenne", "♢", "green"]
+        ].map(([value, label, icon, tone]) => (
+          <article key={label}>
+            <strong>{value}</strong>
+            <small>{label}</small>
+            <span className={tone}>{icon}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className="article-list-card">
+        <div className="article-filters">
+          <label>
+            <span>⌕</span>
+            <input placeholder="Rechercher un article..." />
+          </label>
+          {["Catégorie", "Famille", "Statut", "Entrepôt", "Plus de filtres"].map((filter) => (
+            <button key={filter} onClick={() => onAction(`Filtre ${filter} activé en mode mock.`)} type="button">
+              {filter} ⌄
+            </button>
+          ))}
+          <button onClick={() => onAction("Filtres réinitialisés.")} type="button">↻ Réinitialiser</button>
+          <div>
+            <button className="active" type="button">▦</button>
+            <button type="button">☷</button>
+            <button onClick={() => onAction("Paramètres de colonnes ouverts.")} type="button">⚙</button>
+          </div>
+        </div>
+
+        <table className="articles-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" /></th>
+              <th>Référence ↕</th>
+              <th>Désignation</th>
+              <th>Catégorie</th>
+              <th>Unité</th>
+              <th>Prix moyen (FCFA)</th>
+              <th>Stock disponible</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {articleItems.map((item) => (
+              <tr key={item.reference}>
+                <td><input type="checkbox" /></td>
+                <td>
+                  <button className="article-reference" onClick={() => onOpenArticle(item)} type="button">
+                    <span>{item.icon}</span>
+                    <b>{item.reference}</b>
+                  </button>
+                </td>
+                <td>{item.designation}</td>
+                <td>{item.category}</td>
+                <td>{item.unit}</td>
+                <td>{item.averagePrice}</td>
+                <td>{item.stock}</td>
+                <td><em className={`status-pill ${statusClass(item.status)}`}>{item.status}</em></td>
+                <td>
+                  <div className="row-actions">
+                    <button aria-label="Voir" onClick={() => onOpenArticle(item)} type="button">⊙</button>
+                    <button aria-label="Modifier" onClick={() => onAction(`Édition de ${item.reference} ouverte en mock.`)} type="button">✎</button>
+                    <button aria-label="Plus" onClick={() => onAction(`Menu actions de ${item.reference} : dupliquer, archiver, QR, lots.`)} type="button">…</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <footer className="article-pagination">
+          <span>Affichage de 1 à 10 sur 2.356 articles</span>
+          <div>
+            <button type="button">«</button>
+            <button type="button">‹</button>
+            <button className="active" type="button">1</button>
+            <button type="button">2</button>
+            <button type="button">3</button>
+            <span>...</span>
+            <button type="button">236</button>
+            <button type="button">›</button>
+            <button type="button">»</button>
+          </div>
+          <button type="button">10 / page ⌄</button>
+        </footer>
+      </section>
+    </section>
+  );
+}
+
+function ArticleDetail({
+  article,
+  onAction,
+  onBack
+}: {
+  article: ArticleRecord;
+  onAction: (message: string | null) => void;
+  onBack: () => void;
+}) {
+  return (
+    <section className="article-detail-page">
+      <div className="article-breadcrumb">
+        <button onClick={onBack} type="button">Articles</button>
+        <span>›</span>
+        <strong>Détail de l'article</strong>
+      </div>
+
+      <header className="article-detail-header">
+        <ProductVisual label={article.icon} />
+        <div className="article-identity">
+          <em className={`status-pill ${statusClass(article.status)}`}>{article.status}</em>
+          <h1>{article.designation}</h1>
+          <button onClick={() => onAction("Article ajouté aux favoris.")} type="button">☆</button>
+          <button onClick={() => onAction("Menu contextuel article ouvert.")} type="button">⋮</button>
+          <dl>
+            <div>
+              <dt>Référence</dt>
+              <dd>{article.reference}</dd>
+            </div>
+            <div>
+              <dt>Code-barres (EAN13)</dt>
+              <dd>{article.barcode}</dd>
+            </div>
+            <div>
+              <dt>Catégorie</dt>
+              <dd>{article.category}</dd>
+            </div>
+            <div>
+              <dt>Unité de vente</dt>
+              <dd><button type="button">{article.unit} (20) ⌄</button></dd>
+            </div>
+          </dl>
+          <p>
+            Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre.
+          </p>
+          <div className="article-tags">
+            <span>Antipyrétique</span>
+            <span>Analgésique</span>
+            <span>OTC</span>
+          </div>
+        </div>
+        <div className="article-detail-actions">
+          <button onClick={() => onAction("Impression étiquette prête : code-barres EAN13 et QR de traçabilité.")} type="button">▦ Imprimer étiquette</button>
+          <button onClick={() => onAction("Impression POS préparée.")} type="button">▤ Imprimer POS</button>
+          <button onClick={() => onAction("QR Code généré en mock pour l'article PARA-500.")} type="button">▦ Générer QR Code</button>
+          <button className="primary" onClick={() => onAction("Mode modification article ouvert.")} type="button">✎ Modifier</button>
+        </div>
+      </header>
+
+      <div className="article-detail-grid">
+        <article className="article-tabs-card">
+          <nav className="article-tabs">
+            {["Informations générales", "Stocks & Emplacements", "Lots & Séries", "Tarification", "Fournisseurs", "Documents", "Historique"].map((tab, index) => (
+              <button className={index === 0 ? "active" : ""} key={tab} onClick={() => onAction(`Onglet ${tab} prêt à être détaillé.`)} type="button">
+                {tab}
+              </button>
+            ))}
+          </nav>
+
+          <div className="article-info-columns">
+            <section>
+              <h2>Informations générales</h2>
+              <InfoRows
+                rows={[
+                  ["Référence interne", article.reference],
+                  ["Désignation", article.designation],
+                  ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
+                  ["Catégorie", "Médicaments > Analgiques"],
+                  ["Famille", article.family],
+                  ["Marque", "BIOPHARMA"],
+                  ["Laboratoire", "BIOPHARMA"],
+                  ["Unité de base", "Boîte"],
+                  ["Contenu de l'unité", "20 comprimés"],
+                  ["Unité de vente", "Boîte (20)"],
+                  ["Unité d'achat", "Carton (50 boîtes)"],
+                  ["Poids net", "0,050 kg"],
+                  ["Volume", "0,00012 m³"],
+                  ["Conditionnement", "Boîte en carton"],
+                  ["Durée de vie (mois)", "36"],
+                  ["Température de conservation", "Ambiante"],
+                  ["Code douanier", "30049000"],
+                  ["Pays d'origine", "France"]
+                ]}
+              />
+            </section>
+
+            <section>
+              <h2>Codes & Identifiants</h2>
+              <InfoRows
+                rows={[
+                  ["Code-barres (EAN13)", article.barcode],
+                  ["Code-barres (EAN14)", "6161101234564"],
+                  ["Code interne", "ART-2024-001256"],
+                  ["Référence fabricant", "PARA500-BIO"],
+                  ["SKU", "PARA500-BOX20"]
+                ]}
+              />
+              <h2>Images</h2>
+              <div className="article-images">
+                <ProductVisual label="PARA" />
+                <ProductVisual label="TAB" />
+                <ProductVisual label="BOX" />
+                <button onClick={() => onAction("Ajout d'image produit ouvert.")} type="button">＋</button>
+              </div>
+              <h2>Documents associés</h2>
+              <div className="document-list">
+                {["Fiche technique.pdf", "Certificat d'analyse.pdf", "Notice utilisation.pdf", "Autorisation mise sur marché.pdf"].map((document, index) => (
+                  <button key={document} onClick={() => onAction(`${document} prêt pour téléchargement mock.`)} type="button">
+                    <span>▣ {document}</span>
+                    <small>{[245, 320, 512, 780][index]} KB</small>
+                    <small>12/01/2024</small>
+                    <b>⇩</b>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <aside className="article-side-panel">
+          <article className="stock-preview">
+            <header>
+              <strong>Aperçu du stock</strong>
+              <button onClick={() => onAction("Ouverture du détail temps réel du stock.")} type="button">Voir le détail ›</button>
+            </header>
+            <div>
+              {[
+                ["Stock disponible", "2 500", "Boîtes", "green"],
+                ["Stock réservé", "350", "Boîtes", "blue"],
+                ["Stock bloqué", "120", "Boîtes", "orange"],
+                ["Stock total", "2 970", "Boîtes", "dark"]
+              ].map(([label, value, unit, tone]) => (
+                <section key={label}>
+                  <small>{label}</small>
+                  <b className={tone}>{value}</b>
+                  <span>{unit}</span>
+                </section>
+              ))}
+            </div>
+            <p>Dernière mise à jour : 31/05/2024 14:32 <button type="button">↻ Actualiser</button></p>
+          </article>
+
+          <SideCard
+            title="Informations commerciales"
+            rows={[
+              ["Prix d'achat moyen", "850 FCFA"],
+              ["Prix de vente (unitaire)", "1 250 FCFA"],
+              ["TVA", "18%"],
+              ["Marge brute", "47,1%"],
+              ["Code douanier", "30049000"],
+              ["Pays d'origine", "France"],
+              ["Fournisseur principal", "PHARMA CI"]
+            ]}
+          />
+
+          <article className="quick-article-actions">
+            <strong>Actions rapides</strong>
+            {[
+              "Créer une entrée de stock",
+              "Créer une sortie de stock",
+              "Transférer le stock",
+              "Ajuster le stock",
+              "Dupliquer l'article",
+              "Désactiver l'article"
+            ].map((action) => (
+              <button className={action.includes("Désactiver") ? "danger" : ""} key={action} onClick={() => onAction(`${action} : workflow mock prêt.`)} type="button">
+                {action}
+              </button>
+            ))}
+          </article>
+
+          <article className="article-warning">
+            <strong>Alertes</strong>
+            <p>Péremption la plus proche : Lot LOT-240501</p>
+            <span>Expire le 15/08/2024 (75 jours)</span>
+            <button onClick={() => onAction("Liste des lots et péremptions ouverte en mock.")} type="button">Voir tous les lots</button>
+          </article>
+        </aside>
+      </div>
+
+      <footer className="article-audit">
+        Créé le 15/01/2024 par Amadou DIOP
+        <span>Dernière modification le 31/05/2024 à 14:32 par Fatou NDIAYE</span>
+      </footer>
+    </section>
+  );
+}
+
+function InfoRows({ rows }: { rows: string[][] }) {
+  return (
+    <dl className="info-rows">
+      {rows.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function SideCard({ title, rows }: { title: string; rows: string[][] }) {
+  return (
+    <article className="side-info-card">
+      <strong>{title}</strong>
+      <InfoRows rows={rows} />
+    </article>
+  );
+}
+
+function ProductVisual({ label }: { label: string }) {
+  return (
+    <div className="product-visual">
+      <span>{label}</span>
+      <small>500mg</small>
+    </div>
   );
 }
 
@@ -923,19 +1458,31 @@ function iconForNav(item: string) {
   const icons: Record<string, string> = {
     "Tableau de bord": "▦",
     Articles: "◇",
+    Catalogue: "▤",
     Stocks: "▤",
     Entrées: "▥",
     Sorties: "⇄",
     Transferts: "⇆",
     Inventaires: "☑",
+    "Lots & Séries": "▣",
+    Péremptions: "◷",
     Approvisionnements: "□",
     Achats: "▱",
     Fournisseurs: "♙",
     Entrepôts: "⌂",
+    Emplacements: "⌖",
     Rapports: "▥",
     Alertes: "♧",
     Paramètres: "⚙"
   };
 
   return icons[item] ?? "▧";
+}
+
+function statusClass(status: ArticleStatus) {
+  return status
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-");
 }
