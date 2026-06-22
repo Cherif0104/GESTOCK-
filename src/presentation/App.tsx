@@ -41,6 +41,21 @@ interface ArticleRecord {
   icon: string;
 }
 
+interface CatalogProduct {
+  code: string;
+  name: string;
+  family: string;
+  brand: string;
+  type: "Produit standard" | "Produit à variantes" | "Kit" | "Nomenclature" | "Service logistique";
+  variants: number;
+  status: "Actif" | "Brouillon" | "Archivé";
+  categoryPath: string;
+  template: string;
+  classification: string;
+  attributes: string[];
+  documents: number;
+}
+
 const navigationItems = [
   "Tableau de bord",
   "Articles",
@@ -255,6 +270,143 @@ const articleItems: ArticleRecord[] = [
     location: "Thiès / H-05",
     icon: "LED"
   }
+];
+
+const catalogProducts: CatalogProduct[] = [
+  {
+    code: "MDM-PARA-500",
+    name: "Paracétamol 500mg",
+    family: "Médicaments / Comprimés",
+    brand: "BioPharma",
+    type: "Produit standard",
+    variants: 3,
+    status: "Actif",
+    categoryPath: "Consommables > Médicaments > Analgiques",
+    template: "Template Médicament",
+    classification: "GS1 / UNSPSC 51142000",
+    attributes: ["Dosage 500mg", "Forme comprimé", "OTC", "Conservation ambiante"],
+    documents: 4
+  },
+  {
+    code: "MDM-GANT-LATEX",
+    name: "Gants médicaux latex",
+    family: "Consommables / Protection",
+    brand: "MediSafe",
+    type: "Produit à variantes",
+    variants: 4,
+    status: "Actif",
+    categoryPath: "Consommables > Protection > Gants",
+    template: "Template Produit médical",
+    classification: "GS1 / UNSPSC 42132203",
+    attributes: ["Taille", "Matière latex", "Stérile", "Usage unique"],
+    documents: 6
+  },
+  {
+    code: "MDM-HUILE-5L",
+    name: "Huile moteur 5L",
+    family: "Maintenance / Lubrifiants",
+    brand: "Caterpillar",
+    type: "Produit standard",
+    variants: 2,
+    status: "Actif",
+    categoryPath: "Matériels > Maintenance > Lubrifiants",
+    template: "Template Produit chimique",
+    classification: "UNSPSC 15121501",
+    attributes: ["Capacité 5L", "Viscosité 15W40", "Produit chimique"],
+    documents: 5
+  },
+  {
+    code: "MDM-CIMENT-50",
+    name: "Ciment Portland 50kg",
+    family: "Matériaux / Béton",
+    brand: "CimAfrique",
+    type: "Produit standard",
+    variants: 1,
+    status: "Actif",
+    categoryPath: "Matériaux > Béton > Ciment",
+    template: "Template Matériaux",
+    classification: "OHADA / Classe douanière 252329",
+    attributes: ["Poids 50kg", "Classe 42.5", "Palette 40 sacs"],
+    documents: 3
+  },
+  {
+    code: "MDM-TSHIRT-CORP",
+    name: "T-Shirt corporate",
+    family: "Textile / Uniformes",
+    brand: "Gestock Wear",
+    type: "Produit à variantes",
+    variants: 9,
+    status: "Brouillon",
+    categoryPath: "Équipements > Uniformes > Textile",
+    template: "Template Produit à variantes",
+    classification: "ABC B / XYZ X",
+    attributes: ["Couleur", "Taille", "Grammage", "Logo"],
+    documents: 2
+  },
+  {
+    code: "KIT-EPI-STD",
+    name: "Kit EPI standard",
+    family: "Sécurité / Kits",
+    brand: "Gestock Safety",
+    type: "Kit",
+    variants: 0,
+    status: "Actif",
+    categoryPath: "Kits > Sécurité > EPI",
+    template: "Template Kit",
+    classification: "Classe logistique Sécurité",
+    attributes: ["Casque", "Gants", "Bottes", "Gilet"],
+    documents: 5
+  },
+  {
+    code: "BOM-TABLE-BUREAU",
+    name: "Table de bureau",
+    family: "Mobilier / Bureau",
+    brand: "OfficeLine",
+    type: "Nomenclature",
+    variants: 2,
+    status: "Actif",
+    categoryPath: "Nomenclatures > Mobilier > Tables",
+    template: "Template BOM",
+    classification: "UNSPSC 56101519",
+    attributes: ["Plateau", "Pieds", "Visserie", "Finition"],
+    documents: 4
+  },
+  {
+    code: "MDM-PC-BUREAU",
+    name: "Ordinateur bureau standard",
+    family: "IT / Ordinateurs",
+    brand: "Dell",
+    type: "Nomenclature",
+    variants: 3,
+    status: "Actif",
+    categoryPath: "Nomenclatures > IT > Ordinateurs",
+    template: "Template Pièce détachée",
+    classification: "UNSPSC 43211507",
+    attributes: ["Carte mère", "RAM", "SSD", "Alimentation"],
+    documents: 7
+  }
+];
+
+const catalogSubmodules = [
+  "Catalogue Produits",
+  "Catégories",
+  "Familles",
+  "Marques",
+  "Attributs",
+  "Variantes",
+  "Modèles d'articles",
+  "Kits",
+  "Nomenclatures",
+  "Classifications",
+  "Bibliothèque documentaire",
+  "Historique Catalogue"
+];
+
+const categoryTree = [
+  ["Consommables", "Médicaments", "Alimentaire"],
+  ["Matériaux", "Béton", "Acier"],
+  ["Équipements", "Uniformes", "Sécurité"],
+  ["Nomenclatures", "Mobilier", "IT"]
 ];
 
 export function App({ model }: AppProps) {
@@ -719,7 +871,9 @@ function DashboardScreen({
 }) {
   const isDashboard = activeNav === "Tableau de bord";
   const isArticles = activeNav === "Articles";
+  const isCatalogue = activeNav === "Catalogue";
   const [selectedArticle, setSelectedArticle] = useState<ArticleRecord | null>(null);
+  const [selectedCatalogProduct, setSelectedCatalogProduct] = useState<CatalogProduct | null>(null);
 
   return (
     <main className="erp-shell">
@@ -743,6 +897,9 @@ function DashboardScreen({
                 onNav(item);
                 if (item !== "Articles") {
                   setSelectedArticle(null);
+                }
+                if (item !== "Catalogue") {
+                  setSelectedCatalogProduct(null);
                 }
               }}
               type="button"
@@ -797,6 +954,13 @@ function DashboardScreen({
               onAction={onAction}
               onBack={() => setSelectedArticle(null)}
               onOpenArticle={(nextArticle) => setSelectedArticle(nextArticle)}
+            />
+          ) : isCatalogue ? (
+            <CatalogueModule
+              onAction={onAction}
+              onBack={() => setSelectedCatalogProduct(null)}
+              onOpenProduct={(product) => setSelectedCatalogProduct(product)}
+              product={selectedCatalogProduct}
             />
           ) : (
             <>
@@ -1249,6 +1413,357 @@ function ArticleDetail({
   );
 }
 
+function CatalogueModule({
+  onAction,
+  onBack,
+  onOpenProduct,
+  product
+}: {
+  onAction: (message: string | null) => void;
+  onBack: () => void;
+  onOpenProduct: (product: CatalogProduct) => void;
+  product: CatalogProduct | null;
+}) {
+  if (product) {
+    return (
+      <CatalogProductDetail
+        onAction={onAction}
+        onBack={onBack}
+        product={product}
+      />
+    );
+  }
+
+  return (
+    <section className="catalogue-page">
+      <header className="catalogue-header">
+        <div>
+          <h1>Catalogue</h1>
+          <p>Master Data Management produit : produits maîtres, variantes, attributs, classifications et modèles.</p>
+        </div>
+        <div>
+          <button onClick={() => onAction("Import référentiel Catalogue ouvert : produits maîtres, attributs, familles, marques et classifications.")} type="button">
+            ⇩ Importer référentiel
+          </button>
+          <button className="primary" onClick={() => onAction("Assistant Nouveau produit maître prêt : modèle, attributs, variantes, documents et classifications.")} type="button">
+            + Nouveau produit maître
+          </button>
+        </div>
+      </header>
+
+      <section className="catalogue-kpis">
+        {[
+          ["1 284", "Produits maîtres", "▧", "blue"],
+          ["342", "Variantes", "◇", "green"],
+          ["86", "Catégories", "☷", "purple"],
+          ["24", "Modèles d'articles", "▣", "orange"],
+          ["97,8%", "Qualité référentiel", "♢", "green"]
+        ].map(([value, label, icon, tone]) => (
+          <article key={label}>
+            <strong>{value}</strong>
+            <small>{label}</small>
+            <span className={tone}>{icon}</span>
+          </article>
+        ))}
+      </section>
+
+      <nav className="catalogue-subnav">
+        {catalogSubmodules.map((submodule, index) => (
+          <button
+            className={index === 0 ? "active" : ""}
+            key={submodule}
+            onClick={() => onAction(`${submodule} prêt : écran dédié à générer dans le module Catalogue.`)}
+            type="button"
+          >
+            {submodule}
+          </button>
+        ))}
+      </nav>
+
+      <section className="catalogue-grid">
+        <article className="catalogue-products-card">
+          <div className="catalogue-filters">
+            <label>
+              <span>⌕</span>
+              <input placeholder="Rechercher un produit maître..." />
+            </label>
+            {["Famille", "Marque", "Type", "Statut", "Classification"].map((filter) => (
+              <button key={filter} onClick={() => onAction(`Filtre Catalogue ${filter} activé en mode mock.`)} type="button">
+                {filter} ⌄
+              </button>
+            ))}
+            <button onClick={() => onAction("Filtres Catalogue réinitialisés.")} type="button">↻ Réinitialiser</button>
+          </div>
+
+          <table className="catalogue-table">
+            <thead>
+              <tr>
+                <th><input type="checkbox" /></th>
+                <th>Code produit</th>
+                <th>Nom produit</th>
+                <th>Famille</th>
+                <th>Marque</th>
+                <th>Type</th>
+                <th>Nb variantes</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {catalogProducts.map((item) => (
+                <tr key={item.code}>
+                  <td><input type="checkbox" /></td>
+                  <td>
+                    <button className="catalogue-code" onClick={() => onOpenProduct(item)} type="button">
+                      <span>{item.code.slice(4, 8)}</span>
+                      <b>{item.code}</b>
+                    </button>
+                  </td>
+                  <td>{item.name}</td>
+                  <td>{item.family}</td>
+                  <td>{item.brand}</td>
+                  <td>{item.type}</td>
+                  <td>{item.variants}</td>
+                  <td><em className={`catalogue-status ${catalogStatusClass(item.status)}`}>{item.status}</em></td>
+                  <td>
+                    <div className="row-actions">
+                      <button aria-label="Voir" onClick={() => onOpenProduct(item)} type="button">⊙</button>
+                      <button aria-label="Modifier" onClick={() => onAction(`Édition du produit maître ${item.code} ouverte.`)} type="button">✎</button>
+                      <button aria-label="Plus" onClick={() => onAction(`Menu MDM ${item.code} : variantes, modèle, archivage, duplication.`)} type="button">…</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <footer className="article-pagination">
+            <span>Affichage de 1 à 8 sur 1.284 produits maîtres</span>
+            <div>
+              <button type="button">«</button>
+              <button className="active" type="button">1</button>
+              <button type="button">2</button>
+              <button type="button">3</button>
+              <span>...</span>
+              <button type="button">129</button>
+              <button type="button">»</button>
+            </div>
+            <button type="button">10 / page ⌄</button>
+          </footer>
+        </article>
+
+        <aside className="catalogue-side">
+          <article className="catalogue-tree-card">
+            <header>
+              <strong>Hiérarchie catégories</strong>
+              <button onClick={() => onAction("Gestion hiérarchie catégories ouverte.")} type="button">Gérer</button>
+            </header>
+            {categoryTree.map(([root, child, leaf]) => (
+              <div className="tree-branch" key={root}>
+                <b>{root}</b>
+                <span>└ {child}</span>
+                <small>└ {leaf}</small>
+              </div>
+            ))}
+          </article>
+
+          <article className="catalogue-reference-card">
+            <strong>Référentiels actifs</strong>
+            {[
+              ["Familles", "64", "Comprimés, Sirops, Injectables"],
+              ["Marques", "42", "BioPharma, Samsung, Bosch"],
+              ["Attributs", "128", "Couleur, Taille, Poids, Capacité"],
+              ["Classifications", "7", "GS1, UNSPSC, OHADA, ABC, XYZ"]
+            ].map(([label, value, text]) => (
+              <button key={label} onClick={() => onAction(`${label} : référentiel prêt en mode mock.`)} type="button">
+                <span>
+                  <b>{label}</b>
+                  <small>{text}</small>
+                </span>
+                <strong>{value}</strong>
+              </button>
+            ))}
+          </article>
+
+          <article className="catalogue-warning">
+            <strong>Qualité master data</strong>
+            <p>18 produits maîtres sans classification GS1.</p>
+            <p>7 variantes sans attribut obligatoire.</p>
+            <button onClick={() => onAction("Rapport qualité master data ouvert.")} type="button">Corriger les anomalies</button>
+          </article>
+        </aside>
+      </section>
+    </section>
+  );
+}
+
+function CatalogProductDetail({
+  onAction,
+  onBack,
+  product
+}: {
+  onAction: (message: string | null) => void;
+  onBack: () => void;
+  product: CatalogProduct;
+}) {
+  return (
+    <section className="catalogue-detail-page">
+      <div className="article-breadcrumb">
+        <button onClick={onBack} type="button">Catalogue</button>
+        <span>›</span>
+        <strong>Produit maître</strong>
+      </div>
+
+      <header className="catalogue-detail-header">
+        <ProductVisual label={product.code.slice(4, 8)} />
+        <div className="catalogue-identity">
+          <em className={`catalogue-status ${catalogStatusClass(product.status)}`}>{product.status}</em>
+          <h1>{product.name}</h1>
+          <p>{product.categoryPath}</p>
+          <dl>
+            <div>
+              <dt>Code produit</dt>
+              <dd>{product.code}</dd>
+            </div>
+            <div>
+              <dt>Famille</dt>
+              <dd>{product.family}</dd>
+            </div>
+            <div>
+              <dt>Marque</dt>
+              <dd>{product.brand}</dd>
+            </div>
+            <div>
+              <dt>Type</dt>
+              <dd>{product.type}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="article-detail-actions">
+          <button onClick={() => onAction("Création variante ouverte depuis le produit maître.")} type="button">◇ Créer variante</button>
+          <button onClick={() => onAction("Génération article opérationnel depuis modèle Catalogue prête.")} type="button">▧ Générer article</button>
+          <button onClick={() => onAction("Duplication produit maître prête.")} type="button">▤ Dupliquer</button>
+          <button className="primary" onClick={() => onAction("Mode édition produit maître ouvert.")} type="button">✎ Modifier</button>
+        </div>
+      </header>
+
+      <div className="catalogue-detail-grid">
+        <article className="article-tabs-card">
+          <nav className="article-tabs">
+            {["Master data", "Attributs", "Variantes", "Modèles", "Kits & BOM", "Classifications", "Documents", "Historique"].map((tab, index) => (
+              <button className={index === 0 ? "active" : ""} key={tab} onClick={() => onAction(`Onglet Catalogue ${tab} prêt à détailler.`)} type="button">
+                {tab}
+              </button>
+            ))}
+          </nav>
+
+          <div className="catalogue-detail-content">
+            <section>
+              <h2>Informations master data</h2>
+              <InfoRows
+                rows={[
+                  ["Code produit", product.code],
+                  ["Nom produit", product.name],
+                  ["Famille", product.family],
+                  ["Marque", product.brand],
+                  ["Type", product.type],
+                  ["Modèle affecté", product.template],
+                  ["Chemin catégorie", product.categoryPath],
+                  ["Classification", product.classification],
+                  ["Statut MDM", product.status]
+                ]}
+              />
+            </section>
+
+            <section>
+              <h2>Attributs obligatoires</h2>
+              <div className="attribute-grid">
+                {product.attributes.map((attribute) => (
+                  <span key={attribute}>{attribute}</span>
+                ))}
+              </div>
+
+              <h2>Variantes</h2>
+              <div className="variant-list">
+                {["Rouge S", "Rouge M", "Rouge L", "Bleu M"].slice(0, Math.max(1, Math.min(product.variants, 4))).map((variant) => (
+                  <button key={variant} onClick={() => onAction(`Variante ${variant} ouverte en mock.`)} type="button">
+                    <span>{variant}</span>
+                    <small>Attributs complets</small>
+                  </button>
+                ))}
+              </div>
+
+              <h2>Bibliothèque documentaire</h2>
+              <div className="document-list">
+                {["Fiche technique commune.pdf", "Norme classification.pdf", "Notice produit maître.pdf"].map((document, index) => (
+                  <button key={document} onClick={() => onAction(`${document} prêt pour consultation.`)} type="button">
+                    <span>▣ {document}</span>
+                    <small>{[210, 184, 390][index]} KB</small>
+                    <small>MDM</small>
+                    <b>⇩</b>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <aside className="catalogue-side">
+          <SideCard
+            title="Gouvernance MDM"
+            rows={[
+              ["Propriétaire", "Data Steward Catalogue"],
+              ["Qualité données", "97,8%"],
+              ["Version", "v3.2"],
+              ["Dernière revue", "31/05/2024"],
+              ["Workflow", "Validé"]
+            ]}
+          />
+
+          <article className="catalogue-reference-card">
+            <strong>Kits & nomenclatures</strong>
+            {[
+              ["Kit EPI", "Casque + Gants + Bottes"],
+              ["Kit Bureau", "PC + Clavier + Souris"],
+              ["BOM Table", "Plateau + Pieds"],
+              ["BOM PC", "Carte mère + RAM + SSD"]
+            ].map(([label, text]) => (
+              <button key={label} onClick={() => onAction(`${label} ouvert en mock.`)} type="button">
+                <span>
+                  <b>{label}</b>
+                  <small>{text}</small>
+                </span>
+                <strong>›</strong>
+              </button>
+            ))}
+          </article>
+
+          <article className="quick-article-actions">
+            <strong>Actions Catalogue</strong>
+            {[
+              "Créer une catégorie enfant",
+              "Ajouter un attribut",
+              "Créer une variante",
+              "Associer un modèle",
+              "Lier une classification",
+              "Archiver le produit maître"
+            ].map((action) => (
+              <button className={action.includes("Archiver") ? "danger" : ""} key={action} onClick={() => onAction(`${action} : workflow Catalogue prêt.`)} type="button">
+                {action}
+              </button>
+            ))}
+          </article>
+        </aside>
+      </div>
+
+      <footer className="article-audit">
+        Produit maître créé le 12/01/2024 par Data Steward
+        <span>Dernière modification le 31/05/2024 à 10:18 par Aminata DIOP</span>
+      </footer>
+    </section>
+  );
+}
+
 function InfoRows({ rows }: { rows: string[][] }) {
   return (
     <dl className="info-rows">
@@ -1480,6 +1995,14 @@ function iconForNav(item: string) {
 }
 
 function statusClass(status: ArticleStatus) {
+  return status
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-");
+}
+
+function catalogStatusClass(status: CatalogProduct["status"]) {
   return status
     .toLowerCase()
     .normalize("NFD")
