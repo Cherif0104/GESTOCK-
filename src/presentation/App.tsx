@@ -912,9 +912,8 @@ function DashboardScreen({
         </nav>
 
         <section className="quick-actions">
-          <strong>Réduction rapide</strong>
-          <button onClick={() => onAction("Réception rapide ouverte en mode mock.")} type="button">⇩ Réception</button>
-          <button onClick={() => onAction("Sortie rapide ouverte en mode mock.")} type="button">⇧ Sortie</button>
+          <strong>Réception rapide</strong>
+          <button onClick={() => onAction("Scanner code-barres ouvert : caméra, lecteur USB et recherche EAN prêts en mock.")} type="button">▥ Scanner un code-barres</button>
         </section>
 
         <small>© 2024 {organization.name}. Tous droits réservés.</small>

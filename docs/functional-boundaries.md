@@ -309,5 +309,6 @@ Sous-modules :
 6. Inventaires.
 7. Lots & Series.
 
-Chaque module doit conserver le meme niveau de detail visuel, fonctionnel et
-technique que le module Articles deja valide.
+Chaque module doit etre genere ecran par ecran avec le meme niveau d'exigence
+visuelle, fonctionnelle et technique que la maquette Articles en cours de
+reprise.
