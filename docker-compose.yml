@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gestock-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gestock}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gestock_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-gestock}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - gestock_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gestock} -d ${POSTGRES_DB:-gestock}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: gestock-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - gestock_redis_data:/data
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: gestock-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  gestock_postgres_data:
+  gestock_redis_data:
