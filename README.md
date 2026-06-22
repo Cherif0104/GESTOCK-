@@ -88,6 +88,16 @@ npm run build
 npm run preview
 ```
 
+### Commandes backend (bootstrap)
+
+```bash
+npm run contracts:build
+npm run api:dev
+npm run api:build
+```
+
+Le build front reste inchangé : `npm run build` à la racine.
+
 ## Prochaines extensions recommandées
 
 1. Ajouter une API backend multi-tenant avec persistance relationnelle.
