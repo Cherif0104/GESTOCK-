@@ -24,10 +24,17 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(45, 157, 130, 0.14), transparent 28rem),
     radial-gradient(circle at 80% 0%, rgba(232, 185, 35, 0.14), transparent 24rem),
@@ -138,6 +145,7 @@ button {
   display: grid;
   grid-template-columns: minmax(22rem, 0.85fr) minmax(28rem, 1.15fr);
   gap: 1.5rem;
+  overflow: auto;
   padding: 1.5rem;
 }
 
@@ -366,8 +374,9 @@ button {
 
 .erp-shell {
   display: grid;
-  grid-template-columns: 17.5rem minmax(0, 1fr);
-  min-height: 100vh;
+  grid-template-columns: 13.5rem minmax(0, 1fr);
+  height: 100vh;
+  overflow: hidden;
 }
 
 .erp-sidebar {
@@ -375,67 +384,107 @@ button {
   top: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 0;
   height: 100vh;
-  padding: 1rem;
-  background: #0f172a;
+  min-height: 0;
+  padding: 0;
+  background: #1f2937;
   color: #e2e8f0;
 }
 
 .sidebar-brand {
-  padding: 0.8rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand .brand-orb {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.55rem;
+  font-size: 0.9rem;
+}
+
+.sidebar-brand strong {
+  font-size: 0.78rem;
+}
+
+.sidebar-brand small {
+  font-size: 0.68rem;
 }
 
 .erp-nav {
-  display: grid;
-  gap: 0.35rem;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
-.erp-nav button {
+.erp-nav button,
+.sidebar-footer-nav button {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.78rem 0.85rem;
+  padding: 0.42rem 0.5rem;
   border: 0;
-  border-radius: 0.9rem;
+  border-radius: 0.45rem;
   background: transparent;
-  color: #b8c5d9;
+  color: rgba(255, 255, 255, 0.84);
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.76rem;
+  font-weight: 700;
   text-align: left;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
 }
 
-.erp-nav button span {
+.erp-nav button span,
+.sidebar-footer-nav button span {
   display: grid;
-  width: 1.7rem;
-  height: 1.7rem;
+  width: 1.25rem;
+  height: 1.25rem;
   place-items: center;
-  border-radius: 0.55rem;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.35rem;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .erp-nav button:hover,
-.erp-nav button.active {
-  background: rgba(45, 157, 130, 0.22);
+.erp-nav button.active,
+.sidebar-footer-nav button:hover,
+.sidebar-footer-nav button.active {
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
+}
+
+.sidebar-footer-nav {
+  flex: 0 0 auto;
+  padding: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-session {
   display: grid;
   gap: 0.35rem;
-  margin-top: auto;
-  padding: 0.9rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-session button {
   margin-top: 0.6rem;
-  padding: 0.65rem;
+  padding: 0.5rem;
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   background: rgba(239, 68, 68, 0.16);
   color: #fecaca;
   cursor: pointer;
@@ -444,9 +493,11 @@ button {
 
 .erp-main {
   display: grid;
-  gap: 1rem;
+  gap: 1.1rem;
   align-content: start;
-  padding: 1rem;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1.25rem;
 }
 
 .topbar {
@@ -454,9 +505,9 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem;
-  border-radius: 1.4rem;
-  background: rgba(255, 255, 255, 0.86);
+  padding: 1rem 1.15rem;
+  border-radius: 1rem;
+  background: var(--gestock-card);
   backdrop-filter: blur(16px);
 }
 
@@ -469,7 +520,7 @@ button {
 }
 
 .topbar h1 {
-  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-size: clamp(1.45rem, 3vw, 2.2rem);
 }
 
 .topbar-actions {
@@ -494,14 +545,77 @@ button {
   gap: 1rem;
 }
 
+.dashboard-header-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  min-width: min(28rem, 100%);
+  flex: 1;
+  align-items: center;
+}
+
+.search-box span {
+  position: absolute;
+  left: 0.9rem;
+  color: var(--gestock-muted);
+  pointer-events: none;
+}
+
+.search-box input {
+  width: 100%;
+  border: 1px solid var(--gestock-border);
+  border-radius: 0.75rem;
+  background: #f3f4f6;
+  color: var(--gestock-text);
+  font: inherit;
+  padding: 0.78rem 1rem 0.78rem 2.4rem;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: var(--gestock-primary);
+  box-shadow: 0 0 0 3px rgba(45, 157, 130, 0.15);
+}
+
+.filter-button,
+.secondary-button {
+  border: 0;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+  padding: 0.78rem 1rem;
+}
+
+.filter-button {
+  background: var(--gestock-primary);
+  box-shadow: 0 4px 0 0 var(--gestock-primary-dark), 0 10px 18px rgba(45, 157, 130, 0.18);
+  color: #fff;
+}
+
+.secondary-button {
+  border: 1px solid var(--gestock-border);
+  background: #fff;
+  box-shadow: 0 3px 0 0 #e2e8f0;
+  color: #334155;
+}
+
 .panel,
 .kpi-tile {
-  border-radius: 1.4rem;
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(229, 231, 235, 0.85);
+  border-radius: 0.9rem;
+  background: var(--gestock-card);
+  box-shadow: var(--gestock-shadow);
 }
 
 .panel {
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 .hero-panel {
@@ -858,9 +972,21 @@ progress::-moz-progress-bar {
 }
 
 @media (max-width: 1120px) {
+  body,
+  #root {
+    height: auto;
+    overflow: auto;
+  }
+
   .login-screen,
   .erp-shell {
     grid-template-columns: 1fr;
+  }
+
+  .erp-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
 
   .erp-sidebar {
@@ -869,7 +995,20 @@ progress::-moz-progress-bar {
   }
 
   .erp-nav {
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    justify-content: initial;
+    flex: none;
+  }
+
+  .sidebar-footer-nav,
+  .sidebar-session {
+    padding: 0.6rem;
+  }
+
+  .erp-main {
+    height: auto;
+    overflow: visible;
   }
 
   .sidebar-session {
@@ -898,9 +1037,12 @@ progress::-moz-progress-bar {
 
 @media (max-width: 720px) {
   .login-screen,
-  .erp-main,
-  .erp-sidebar {
+  .erp-main {
     padding: 0.75rem;
+  }
+
+  .erp-sidebar {
+    padding: 0;
   }
 
   .login-copy h1 {

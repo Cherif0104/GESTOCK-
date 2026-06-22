@@ -44,8 +44,7 @@ const navigationItems: Array<{ id: WorkspaceView; label: string; icon: string }>
   { id: "stocks", label: "Stocks", icon: "▦" },
   { id: "achats", label: "Achats", icon: "◈" },
   { id: "entrepots", label: "Entrepôts", icon: "▤" },
-  { id: "reporting", label: "Reporting", icon: "◎" },
-  { id: "admin", label: "Administration", icon: "⚙" }
+  { id: "reporting", label: "Reporting", icon: "◎" }
 ];
 
 const inventoryRows = [
@@ -270,8 +269,19 @@ function ErpWorkspace({
           ))}
         </nav>
 
+        <div className="sidebar-footer-nav">
+          <button
+            className={activeView === "admin" ? "active" : ""}
+            onClick={() => onChangeView("admin")}
+            type="button"
+          >
+            <span>⚙</span>
+            Paramètres
+          </button>
+        </div>
+
         <div className="sidebar-session">
-          <small>Connecté comme</small>
+          <small>Session</small>
           <strong>{user.name}</strong>
           <span>{user.role}</span>
           <button type="button" onClick={onLogout}>
@@ -283,7 +293,7 @@ function ErpWorkspace({
       <main className="erp-main">
         <header className="topbar">
           <div>
-            <span className="breadcrumb">GESTOCK / {navigationItems.find((i) => i.id === activeView)?.label}</span>
+            <span className="breadcrumb">GESTOCK / {labelForView(activeView)}</span>
             <h1>{titleForView(activeView)}</h1>
           </div>
           <div className="topbar-actions">
@@ -293,6 +303,8 @@ function ErpWorkspace({
           </div>
         </header>
 
+        <DashboardHeaderBar activeView={activeView} />
+
         {activeView === "dashboard" && <DashboardView model={model} user={user} />}
         {activeView === "stocks" && <StocksView model={model} />}
         {activeView === "achats" && <PurchasingView purchases={model.purchasePipeline} />}
@@ -301,6 +313,31 @@ function ErpWorkspace({
         {activeView === "admin" && <AdminView model={model} user={user} />}
       </main>
     </div>
+  );
+}
+
+function DashboardHeaderBar({ activeView }: { activeView: WorkspaceView }) {
+  const [search, setSearch] = useState("");
+
+  return (
+    <section className="dashboard-header-bar" aria-label="Recherche et filtres">
+      <label className="search-box">
+        <span>⌕</span>
+        <input
+          aria-label="Recherche globale"
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder={`Rechercher dans ${titleForView(activeView).toLowerCase()}...`}
+          type="search"
+          value={search}
+        />
+      </label>
+      <button className="filter-button" type="button">
+        ◷ Filtrer période
+      </button>
+      <button className="secondary-button" type="button">
+        Exporter
+      </button>
+    </section>
   );
 }
 
@@ -553,4 +590,17 @@ function titleForView(view: WorkspaceView): string {
   };
 
   return titles[view];
+}
+
+function labelForView(view: WorkspaceView): string {
+  const labels: Record<WorkspaceView, string> = {
+    dashboard: "Tableau de bord",
+    stocks: "Stocks",
+    achats: "Achats",
+    entrepots: "Entrepôts",
+    reporting: "Reporting",
+    admin: "Paramètres"
+  };
+
+  return labels[view];
 }
