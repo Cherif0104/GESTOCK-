@@ -12,6 +12,12 @@ export type ErpRole =
   | "Magasinier"
   | "Auditeur";
 
+export type PostLoginDestination =
+  | "first-login"
+  | "mfa"
+  | "organization-selection"
+  | "dashboard";
+
 export interface Organization {
   id: string;
   name: string;
@@ -122,10 +128,28 @@ export interface MockUser {
   id: string;
   name: string;
   email: string;
+  password: string;
   role: ErpRole;
   scope: string;
   description: string;
+  firstLogin: boolean;
+  mfaRequired: boolean;
+  defaultOrganizationId?: string;
+  organizations: MockOrganizationAccess[];
   permissions: string[];
+}
+
+export interface MockOrganizationAccess {
+  id: string;
+  name: string;
+  country: string;
+  city: string;
+  domain: string;
+  status: "active" | "suspended" | "invited";
+  isDefault: boolean;
+  role: ErpRole;
+  users: number;
+  warehouses: number;
 }
 
 export interface GestockSnapshot {

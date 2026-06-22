@@ -76,54 +76,195 @@ export const gestockSnapshot: GestockSnapshot = {
       id: "usr-direction",
       name: "Aminata Diop",
       email: "direction@gestock.local",
+      password: "gestock-demo",
       role: "Direction",
       scope: "Groupe - tous pays",
       description: "Vue exécutive, KPI consolidés, risques et performance supply chain.",
+      firstLogin: false,
+      mfaRequired: true,
+      organizations: [
+        {
+          id: "org-gestock-sa",
+          name: "GESTOCK SA",
+          country: "Sénégal",
+          city: "Dakar",
+          domain: "gestock-sa.sn",
+          status: "active",
+          isDefault: false,
+          role: "Direction",
+          users: 156,
+          warehouses: 8
+        },
+        {
+          id: "org-gestock-ci",
+          name: "GESTOCK Côte d'Ivoire",
+          country: "Côte d'Ivoire",
+          city: "Abidjan",
+          domain: "gestock-ci.ci",
+          status: "active",
+          isDefault: false,
+          role: "Direction",
+          users: 87,
+          warehouses: 5
+        },
+        {
+          id: "org-gestock-mali",
+          name: "GESTOCK Mali",
+          country: "Mali",
+          city: "Bamako",
+          domain: "gestock-ml.ml",
+          status: "active",
+          isDefault: false,
+          role: "Direction",
+          users: 64,
+          warehouses: 3
+        }
+      ],
       permissions: ["Pilotage", "Reporting", "Validation stratégique", "Audit lecture"]
     },
     {
       id: "usr-admin",
       name: "Moussa Traoré",
       email: "admin@gestock.local",
+      password: "gestock-demo",
       role: "Administrateur",
       scope: "Tenant complet",
       description: "Paramétrage organisation, utilisateurs, rôles, sites et modules.",
+      firstLogin: false,
+      mfaRequired: false,
+      defaultOrganizationId: "org-gestock-sa",
+      organizations: [
+        {
+          id: "org-gestock-sa",
+          name: "GESTOCK SA",
+          country: "Sénégal",
+          city: "Dakar",
+          domain: "gestock-sa.sn",
+          status: "active",
+          isDefault: true,
+          role: "Administrateur",
+          users: 156,
+          warehouses: 8
+        }
+      ],
       permissions: ["Administration", "Sécurité", "Modules", "Intégrations"]
     },
     {
       id: "usr-stock",
       name: "Nadia Kouamé",
       email: "stock@gestock.local",
+      password: "gestock-demo",
       role: "Responsable Stock",
       scope: "Stocks et inventaires",
       description: "Supervision disponibilité, seuils, inventaires, écarts et transferts.",
+      firstLogin: false,
+      mfaRequired: false,
+      defaultOrganizationId: "org-gestock-ci",
+      organizations: [
+        {
+          id: "org-gestock-ci",
+          name: "GESTOCK Côte d'Ivoire",
+          country: "Côte d'Ivoire",
+          city: "Abidjan",
+          domain: "gestock-ci.ci",
+          status: "active",
+          isDefault: true,
+          role: "Responsable Stock",
+          users: 87,
+          warehouses: 5
+        }
+      ],
       permissions: ["Articles", "Stocks", "Inventaires", "Mouvements"]
     },
     {
       id: "usr-buyer",
       name: "Ibrahima Sow",
       email: "achats@gestock.local",
+      password: "gestock-demo",
       role: "Acheteur",
       scope: "Achats fournisseurs",
       description: "Demandes d'achat, commandes fournisseurs, relances et réceptions.",
+      firstLogin: false,
+      mfaRequired: false,
+      organizations: [
+        {
+          id: "org-gestock-sa",
+          name: "GESTOCK SA",
+          country: "Sénégal",
+          city: "Dakar",
+          domain: "gestock-sa.sn",
+          status: "active",
+          isDefault: false,
+          role: "Acheteur",
+          users: 156,
+          warehouses: 8
+        },
+        {
+          id: "org-gestock-bf",
+          name: "GESTOCK Burkina Faso",
+          country: "Burkina Faso",
+          city: "Ouagadougou",
+          domain: "gestock-bf.bf",
+          status: "active",
+          isDefault: false,
+          role: "Acheteur",
+          users: 45,
+          warehouses: 2
+        }
+      ],
       permissions: ["Fournisseurs", "Demandes d'achat", "Commandes", "Réceptions"]
     },
     {
       id: "usr-warehouse",
       name: "Grâce Mensah",
       email: "magasin@gestock.local",
+      password: "gestock-demo",
       role: "Magasinier",
       scope: "Entrepôt assigné",
       description: "Réceptions, sorties, picking, inventaires terrain et scan mobile.",
+      firstLogin: false,
+      mfaRequired: false,
+      defaultOrganizationId: "org-gestock-bj",
+      organizations: [
+        {
+          id: "org-gestock-bj",
+          name: "GESTOCK Bénin",
+          country: "Bénin",
+          city: "Cotonou",
+          domain: "gestock-bj.bj",
+          status: "active",
+          isDefault: true,
+          role: "Magasinier",
+          users: 38,
+          warehouses: 2
+        }
+      ],
       permissions: ["Réception", "Sortie stock", "Picking", "Scan mobile"]
     },
     {
       id: "usr-auditor",
       name: "Jean-Baptiste Talla",
       email: "audit@gestock.local",
+      password: "gestock-demo",
       role: "Auditeur",
       scope: "Lecture seule contrôlée",
       description: "Contrôle interne, journal d'audit, conformité et écarts sensibles.",
+      firstLogin: true,
+      mfaRequired: true,
+      organizations: [
+        {
+          id: "org-gestock-sa",
+          name: "GESTOCK SA",
+          country: "Sénégal",
+          city: "Dakar",
+          domain: "gestock-sa.sn",
+          status: "active",
+          isDefault: false,
+          role: "Auditeur",
+          users: 156,
+          warehouses: 8
+        }
+      ],
       permissions: ["Audit trail", "Historique", "Reporting lecture", "Conformité"]
     }
   ],

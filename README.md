@@ -89,6 +89,10 @@ de GESTOCK est disponible ici :
 Il couvre le design system, les règles responsive, les workflows, les API,
 l'audit trail, les notifications et la matrice complète des écrans métier.
 
+La simulation des comptes de test et du routage post-login est documentée ici :
+
+- [`docs/mock-auth-routing.md`](docs/mock-auth-routing.md)
+
 ## Commandes
 
 ```bash

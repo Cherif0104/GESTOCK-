@@ -1,10 +1,39 @@
+import { useState } from "react";
+import { simulateLogin } from "../application/simulateLogin";
 import type { GestockViewModel } from "../application/buildGestockViewModel";
 
 interface AppProps {
   model: GestockViewModel;
 }
 
-export function App({ model: _model }: AppProps) {
+export function App({ model }: AppProps) {
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const handleLogin = (formData: FormData) => {
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const result = simulateLogin(model.mockUsers, email, password);
+
+    if (!result.ok) {
+      setLoginError(result.message);
+      return;
+    }
+
+    setLoginError(null);
+    sessionStorage.setItem(
+      "gestock.mockSession",
+      JSON.stringify({
+        userId: result.user.id,
+        email: result.user.email,
+        role: result.user.role,
+        destination: result.destination,
+        organizationId: result.organization?.id ?? null,
+        organizationCount: result.organizations.length,
+        reason: result.reason
+      })
+    );
+  };
+
   return (
     <main className="login-page" aria-label="Connexion GESTOCK">
       <section className="brand-panel" aria-label="Présentation de GESTOCK">
@@ -67,7 +96,13 @@ export function App({ model: _model }: AppProps) {
 
         <div className="dots" aria-hidden="true" />
 
-        <form className="login-card">
+        <form
+          className="login-card"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleLogin(new FormData(event.currentTarget));
+          }}
+        >
           <header>
             <h2>
               Connexion à <span>GESTOCK</span>
@@ -79,7 +114,7 @@ export function App({ model: _model }: AppProps) {
             <span>Adresse e-mail</span>
             <div className="input-shell">
               <i aria-hidden="true">✉</i>
-              <input placeholder="Entrez votre adresse e-mail" type="email" />
+              <input name="email" placeholder="Entrez votre adresse e-mail" type="email" />
             </div>
           </label>
 
@@ -87,7 +122,7 @@ export function App({ model: _model }: AppProps) {
             <span>Mot de passe</span>
             <div className="input-shell">
               <i aria-hidden="true">▣</i>
-              <input placeholder="Entrez votre mot de passe" type="password" />
+              <input name="password" placeholder="Entrez votre mot de passe" type="password" />
               <button aria-label="Afficher le mot de passe" type="button">
                 ◉
               </button>
@@ -102,7 +137,13 @@ export function App({ model: _model }: AppProps) {
             <button type="button">Mot de passe oublié ?</button>
           </div>
 
-          <button className="submit-button" type="button">
+          {loginError ? (
+            <p className="login-error" role="alert">
+              {loginError}
+            </p>
+          ) : null}
+
+          <button className="submit-button" type="submit">
             Se connecter
           </button>
 
