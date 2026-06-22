@@ -1,0 +1,32 @@
+{
+  "name": "gestock-enterprise-saas",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GESTOCK - plateforme SaaS Enterprise de gestion des stocks, approvisionnements et supply chain.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "gestock",
+    "inventory",
+    "supply-chain",
+    "saas",
+    "multi-tenant"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  }
+}
