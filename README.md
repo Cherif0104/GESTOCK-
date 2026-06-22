@@ -79,6 +79,16 @@ dans l'interface déployée. Les règles de coordination sont documentées dans 
 - [`docs/agent-responsibilities.md`](docs/agent-responsibilities.md)
 - [`docs/adr/0001-orchestration-multi-agents.md`](docs/adr/0001-orchestration-multi-agents.md)
 
+## Document maître UI
+
+Le document de référence pour générer les maquettes haute fidélité Enterprise
+de GESTOCK est disponible ici :
+
+- [`docs/gestock-master-ui-spec.md`](docs/gestock-master-ui-spec.md)
+
+Il couvre le design system, les règles responsive, les workflows, les API,
+l'audit trail, les notifications et la matrice complète des écrans métier.
+
 ## Commandes
 
 ```bash
