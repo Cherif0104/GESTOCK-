@@ -15,7 +15,8 @@ Cette version initialise le socle front-end de GESTOCK avec :
 - un tableau de bord exécutif avec KPI, alertes et pipeline achats ;
 - une vue des modules applicatifs activables ;
 - des sections sécurité, reporting, intégrations, mobile et fondations IA ;
-- un design responsive premium destiné aux décideurs et équipes opérationnelles.
+- un design responsive premium destiné aux décideurs et équipes opérationnelles ;
+- un cockpit d'exécution multi-agents pour piloter les responsabilités IA.
 
 ## Architecture
 
@@ -60,6 +61,23 @@ préparer une activation fonctionnelle par tenant.
 - Mobile-first avec scénario faible connectivité
 - Préparation aux usages IA : prévisions, scoring rupture, recommandations achat
 - Reporting décisionnel et exports futurs
+
+## Gouvernance multi-agents
+
+Le projet est désormais organisé avec une affectation claire des agents IA :
+
+- **Claude Opus 4.7 Thinking** : architecture Enterprise, DDD, multi-tenant,
+  sécurité, RBAC et audit trail.
+- **GPT 5.3 Codex Hackfast** : backend, API, base de données, tests, CI et
+  intégrations techniques.
+- **GPT 5.5 Hackfast** : logique métier, workflows, front-end, UX et
+  documentation fonctionnelle.
+
+La section **Exécution IA** de l'application rend cette organisation visible
+dans l'interface déployée. Les règles de coordination sont documentées dans :
+
+- [`docs/agent-responsibilities.md`](docs/agent-responsibilities.md)
+- [`docs/adr/0001-orchestration-multi-agents.md`](docs/adr/0001-orchestration-multi-agents.md)
 
 ## Commandes
 

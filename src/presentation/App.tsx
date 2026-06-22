@@ -1,5 +1,12 @@
 import type { GestockViewModel, WarehouseOverview } from "../application/buildGestockViewModel";
-import type { BusinessModule, ModuleStatus, OperationalAlert, RiskLevel } from "../domain/models";
+import type {
+  AgentResponsibility,
+  BusinessModule,
+  DeliveryWorkstream,
+  ModuleStatus,
+  OperationalAlert,
+  RiskLevel
+} from "../domain/models";
 
 interface AppProps {
   model: GestockViewModel;
@@ -18,6 +25,12 @@ const riskLabel: Record<RiskLevel, string> = {
   critical: "Critique"
 };
 
+const agentStatusLabel: Record<AgentResponsibility["status"], string> = {
+  assigned: "Assigné",
+  "in-progress": "En cours",
+  "ready-for-review": "À revoir"
+};
+
 export function App({ model }: AppProps) {
   const navigationItems = [
     { label: "Pilotage", href: "#pilotage" },
@@ -26,7 +39,8 @@ export function App({ model }: AppProps) {
     { label: "Entrepôts", href: "#stocks" },
     { label: "Reporting", href: "#reporting" },
     { label: "Sécurité", href: "#securite" },
-    { label: "Intégrations", href: "#integrations" }
+    { label: "Intégrations", href: "#integrations" },
+    { label: "Exécution IA", href: "#execution" }
   ];
 
   return (
@@ -256,6 +270,39 @@ export function App({ model }: AppProps) {
           </div>
         </section>
 
+        <section className="section execution" id="execution">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">Orchestration multi-agents</span>
+              <h2>Responsabilités assignées pour industrialiser GESTOCK.</h2>
+              <p>
+                Chaque agent IA porte un périmètre clair afin d'accélérer le backend, les règles
+                métier et l'expérience produit sans mélanger les responsabilités.
+              </p>
+            </div>
+            <div className="metric-chip">
+              <strong>{model.assignedAgentCount}</strong>
+              <span>agents mobilisés</span>
+            </div>
+            <div className="metric-chip">
+              <strong>{model.deliveryPhaseCount}</strong>
+              <span>phases pilotées</span>
+            </div>
+          </div>
+
+          <div className="agent-grid">
+            {model.agentResponsibilities.map((agent) => (
+              <AgentCard key={agent.agent} agent={agent} />
+            ))}
+          </div>
+
+          <div className="workstream-grid">
+            {model.deliveryWorkstreams.map((workstream) => (
+              <WorkstreamCard key={workstream.phase} workstream={workstream} />
+            ))}
+          </div>
+        </section>
+
         <section className="section alerts" aria-label="Alertes opérationnelles">
           <div>
             <span className="eyebrow">Alertes prioritaires</span>
@@ -322,6 +369,51 @@ function AlertCard({ alert }: { alert: OperationalAlert }) {
         <strong>{alert.owner}</strong>
         <em>{alert.dueIn}</em>
       </footer>
+    </article>
+  );
+}
+
+function AgentCard({ agent }: { agent: AgentResponsibility }) {
+  return (
+    <article className={`agent-card ${agent.status}`}>
+      <div className="agent-card-header">
+        <span>{agentStatusLabel[agent.status]}</span>
+        <strong>{agent.agent}</strong>
+      </div>
+      <h3>{agent.role}</h3>
+      <p>{agent.mission}</p>
+      <div>
+        <small>Responsabilités</small>
+        <ul>
+          {agent.ownership.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <small>Livrables immédiats</small>
+        <ul>
+          {agent.immediateDeliverables.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </article>
+  );
+}
+
+function WorkstreamCard({ workstream }: { workstream: DeliveryWorkstream }) {
+  return (
+    <article className="workstream-card">
+      <span>{workstream.leadAgent}</span>
+      <h3>{workstream.phase}</h3>
+      <p>{workstream.goal}</p>
+      <ul>
+        {workstream.deliverables.map((deliverable) => (
+          <li key={deliverable}>{deliverable}</li>
+        ))}
+      </ul>
+      <em>{workstream.dependency}</em>
     </article>
   );
 }

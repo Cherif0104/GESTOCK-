@@ -68,6 +68,8 @@ a {
 .integration-list article,
 .mobile-card,
 .architecture,
+.agent-card,
+.workstream-card,
 .alert-card {
   border: 1px solid rgba(148, 163, 184, 0.18);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.2);
@@ -337,6 +339,8 @@ h3 {
 .security-grid,
 .report-grid,
 .alert-grid,
+.agent-grid,
+.workstream-grid,
 .pillar-grid {
   display: grid;
   gap: 1rem;
@@ -351,6 +355,8 @@ h3 {
 .security-grid article,
 .integration-list article,
 .mobile-card article,
+.agent-card,
+.workstream-card,
 .alert-card,
 .report-grid article,
 .flow-list article,
@@ -585,6 +591,99 @@ h3 {
   font-weight: 800;
 }
 
+.execution {
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.78), rgba(8, 17, 31, 0.82)),
+    radial-gradient(circle at 85% 10%, rgba(22, 185, 129, 0.18), transparent 18rem),
+    radial-gradient(circle at 15% 80%, rgba(47, 128, 255, 0.16), transparent 16rem);
+}
+
+.agent-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.agent-card,
+.workstream-card {
+  padding: 1rem;
+}
+
+.agent-card.assigned {
+  background: linear-gradient(155deg, rgba(47, 128, 255, 0.17), rgba(15, 23, 42, 0.86));
+}
+
+.agent-card.in-progress {
+  background: linear-gradient(155deg, rgba(22, 185, 129, 0.18), rgba(15, 23, 42, 0.86));
+}
+
+.agent-card.ready-for-review {
+  background: linear-gradient(155deg, rgba(251, 191, 36, 0.16), rgba(15, 23, 42, 0.86));
+}
+
+.agent-card-header {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.agent-card-header span,
+.workstream-card span,
+.agent-card small {
+  color: #7cf2c5;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.agent-card-header strong {
+  font-size: 1.1rem;
+}
+
+.agent-card p,
+.workstream-card p {
+  color: #c4d1e4;
+  line-height: 1.65;
+}
+
+.agent-card ul,
+.workstream-card ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.6rem 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-card li,
+.workstream-card li {
+  color: #dce8f8;
+  font-size: 0.92rem;
+}
+
+.agent-card li::before,
+.workstream-card li::before {
+  content: "✓";
+  margin-right: 0.45rem;
+  color: #16b981;
+}
+
+.workstream-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workstream-card {
+  background: rgba(5, 12, 24, 0.62);
+}
+
+.workstream-card em {
+  display: block;
+  margin-top: 0.7rem;
+  color: #fbbf24;
+  font-style: normal;
+  font-weight: 800;
+}
+
 .alerts {
   display: grid;
   grid-template-columns: 0.7fr 1.3fr;
@@ -650,6 +749,11 @@ h3 {
   .security-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .agent-grid,
+  .workstream-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 760px) {
@@ -667,6 +771,8 @@ h3 {
   .security-grid,
   .pillar-grid,
   .alert-grid,
+  .agent-grid,
+  .workstream-grid,
   .command-grid {
     grid-template-columns: 1fr;
   }

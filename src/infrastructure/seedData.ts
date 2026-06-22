@@ -313,5 +313,108 @@ export const gestockSnapshot: GestockSnapshot = {
       title: "Validation rapide",
       description: "Approbations d'achat, litiges et alertes critiques depuis mobile."
     }
+  ],
+  agentResponsibilities: [
+    {
+      agent: "Claude Opus 4.7 Thinking",
+      role: "Architecte Enterprise",
+      mission: "Sécuriser les décisions structurantes avant l'industrialisation du SaaS.",
+      ownership: [
+        "Architecture multi-tenant",
+        "DDD et frontières de domaines",
+        "RBAC, audit trail et conformité",
+        "ADR et arbitrages techniques"
+      ],
+      immediateDeliverables: [
+        "ADR tenancy et isolation données",
+        "Matrice rôles-permissions",
+        "Modèle cible des domaines stock, achat et entrepôt"
+      ],
+      status: "assigned"
+    },
+    {
+      agent: "GPT 5.3 Codex Hackfast",
+      role: "Ingénieur backend & infrastructure",
+      mission: "Construire le moteur transactionnel et les contrats API de GESTOCK.",
+      ownership: [
+        "Backend API v1",
+        "PostgreSQL et migrations",
+        "Authentification et middleware tenant",
+        "Tests backend, CI et intégrations"
+      ],
+      immediateDeliverables: [
+        "Squelette API versionné",
+        "Schéma base organizations, users, roles, items, stocks",
+        "Endpoints health, tenant snapshot et stocks"
+      ],
+      status: "assigned"
+    },
+    {
+      agent: "GPT 5.5 Hackfast",
+      role: "Produit, logique métier & front-end",
+      mission: "Transformer la vitrine actuelle en application métier actionnable.",
+      ownership: [
+        "Workflows opérationnels",
+        "Pages front et composants",
+        "UX mobile-first",
+        "Documentation fonctionnelle"
+      ],
+      immediateDeliverables: [
+        "Pages Stocks, Articles, Achats et Fournisseurs",
+        "Workflow rupture vers demande d'achat",
+        "Design system léger et navigation applicative"
+      ],
+      status: "in-progress"
+    }
+  ],
+  deliveryWorkstreams: [
+    {
+      phase: "Phase 1 - Architecture cible",
+      leadAgent: "Claude Opus 4.7 Thinking",
+      goal: "Verrouiller les fondations SaaS Enterprise avant les développements lourds.",
+      deliverables: [
+        "ADR multi-tenant",
+        "Matrice RBAC",
+        "Modèle DDD cible",
+        "Stratégie audit trail"
+      ],
+      dependency: "Débloque backend, sécurité et modules métier."
+    },
+    {
+      phase: "Phase 2 - Backend MVP",
+      leadAgent: "GPT 5.3 Codex Hackfast",
+      goal: "Remplacer les données statiques par une API sécurisée et persistante.",
+      deliverables: [
+        "API REST /v1",
+        "PostgreSQL multi-tenant",
+        "Auth et permissions",
+        "Tests d'isolation tenant"
+      ],
+      dependency: "Dépend des décisions d'architecture et alimente le front."
+    },
+    {
+      phase: "Phase 3 - Application métier",
+      leadAgent: "GPT 5.5 Hackfast",
+      goal: "Créer les écrans et workflows réellement utilisables par les équipes terrain.",
+      deliverables: [
+        "Routing applicatif",
+        "CRUD articles et fournisseurs",
+        "Flux rupture -> achat -> réception",
+        "Tableaux filtrables par site et entrepôt"
+      ],
+      dependency: "Dépend des contrats API et du modèle métier."
+    },
+    {
+      phase: "Phase 4 - Industrialisation",
+      leadAgent: "Coordination multi-agents",
+      goal: "Rendre la plateforme fiable pour démonstration client et déploiement continu.",
+      deliverables: [
+        "CI build et tests",
+        "Observabilité",
+        "Documentation exploitation",
+        "Préparation Vercel et environnements"
+      ],
+      dependency: "Suit les trois premiers lots pour stabiliser la livraison."
+    }
   ]
 };

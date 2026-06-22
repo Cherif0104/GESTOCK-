@@ -93,6 +93,23 @@ export interface MobileCapability {
   description: string;
 }
 
+export interface AgentResponsibility {
+  agent: string;
+  role: string;
+  mission: string;
+  ownership: string[];
+  immediateDeliverables: string[];
+  status: "assigned" | "in-progress" | "ready-for-review";
+}
+
+export interface DeliveryWorkstream {
+  phase: string;
+  leadAgent: string;
+  goal: string;
+  deliverables: string[];
+  dependency: string;
+}
+
 export interface GestockSnapshot {
   organization: Organization;
   kpis: InventoryKpi[];
@@ -104,4 +121,6 @@ export interface GestockSnapshot {
   integrations: IntegrationEndpoint[];
   reports: ReportingWidget[];
   mobile: MobileCapability[];
+  agentResponsibilities: AgentResponsibility[];
+  deliveryWorkstreams: DeliveryWorkstream[];
 }

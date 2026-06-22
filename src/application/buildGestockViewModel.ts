@@ -21,7 +21,9 @@ export interface WarehouseOverview extends Warehouse {
 
 export interface GestockViewModel extends GestockSnapshot {
   activeModuleCount: number;
+  assignedAgentCount: number;
   enabledCapabilityCount: number;
+  deliveryPhaseCount: number;
   warehouseOverview: WarehouseOverview[];
   highestRiskLabel: string;
   tenantSummary: string;
@@ -46,10 +48,12 @@ export function buildGestockViewModel(snapshot: GestockSnapshot): GestockViewMod
   return {
     ...snapshot,
     activeModuleCount: activeModules.length,
+    assignedAgentCount: snapshot.agentResponsibilities.length,
     enabledCapabilityCount: activeModules.reduce(
       (total, module) => total + module.capabilities.length,
       0
     ),
+    deliveryPhaseCount: snapshot.deliveryWorkstreams.length,
     warehouseOverview,
     highestRiskLabel: riskLabels[highestRisk],
     tenantSummary: `${snapshot.organization.sites.length} sites, ${warehouseOverview.length} entrepôts, ${snapshot.organization.currency}`,
