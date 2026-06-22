@@ -71,7 +71,7 @@ Tokens de démo :
 ## Qualité et tests
 
 ```bash
-pytest
+python3 -m pytest
 ```
 
 ## Vision Enterprise (prochaine étape)
