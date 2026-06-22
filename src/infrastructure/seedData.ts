@@ -71,6 +71,62 @@ export const gestockSnapshot: GestockSnapshot = {
       }
     ]
   },
+  mockUsers: [
+    {
+      id: "usr-direction",
+      name: "Aminata Diop",
+      email: "direction@gestock.local",
+      role: "Direction",
+      scope: "Groupe - tous pays",
+      description: "Vue exécutive, KPI consolidés, risques et performance supply chain.",
+      permissions: ["Pilotage", "Reporting", "Validation stratégique", "Audit lecture"]
+    },
+    {
+      id: "usr-admin",
+      name: "Moussa Traoré",
+      email: "admin@gestock.local",
+      role: "Administrateur",
+      scope: "Tenant complet",
+      description: "Paramétrage organisation, utilisateurs, rôles, sites et modules.",
+      permissions: ["Administration", "Sécurité", "Modules", "Intégrations"]
+    },
+    {
+      id: "usr-stock",
+      name: "Nadia Kouamé",
+      email: "stock@gestock.local",
+      role: "Responsable Stock",
+      scope: "Stocks et inventaires",
+      description: "Supervision disponibilité, seuils, inventaires, écarts et transferts.",
+      permissions: ["Articles", "Stocks", "Inventaires", "Mouvements"]
+    },
+    {
+      id: "usr-buyer",
+      name: "Ibrahima Sow",
+      email: "achats@gestock.local",
+      role: "Acheteur",
+      scope: "Achats fournisseurs",
+      description: "Demandes d'achat, commandes fournisseurs, relances et réceptions.",
+      permissions: ["Fournisseurs", "Demandes d'achat", "Commandes", "Réceptions"]
+    },
+    {
+      id: "usr-warehouse",
+      name: "Grâce Mensah",
+      email: "magasin@gestock.local",
+      role: "Magasinier",
+      scope: "Entrepôt assigné",
+      description: "Réceptions, sorties, picking, inventaires terrain et scan mobile.",
+      permissions: ["Réception", "Sortie stock", "Picking", "Scan mobile"]
+    },
+    {
+      id: "usr-auditor",
+      name: "Jean-Baptiste Talla",
+      email: "audit@gestock.local",
+      role: "Auditeur",
+      scope: "Lecture seule contrôlée",
+      description: "Contrôle interne, journal d'audit, conformité et écarts sensibles.",
+      permissions: ["Audit trail", "Historique", "Reporting lecture", "Conformité"]
+    }
+  ],
   kpis: [
     {
       label: "Valeur de stock",

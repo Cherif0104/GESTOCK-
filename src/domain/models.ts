@@ -4,6 +4,14 @@ export type ModuleStatus = "active" | "available" | "planned";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 
+export type ErpRole =
+  | "Direction"
+  | "Administrateur"
+  | "Responsable Stock"
+  | "Acheteur"
+  | "Magasinier"
+  | "Auditeur";
+
 export interface Organization {
   id: string;
   name: string;
@@ -110,8 +118,19 @@ export interface DeliveryWorkstream {
   dependency: string;
 }
 
+export interface MockUser {
+  id: string;
+  name: string;
+  email: string;
+  role: ErpRole;
+  scope: string;
+  description: string;
+  permissions: string[];
+}
+
 export interface GestockSnapshot {
   organization: Organization;
+  mockUsers: MockUser[];
   kpis: InventoryKpi[];
   modules: BusinessModule[];
   alerts: OperationalAlert[];

@@ -1,10 +1,12 @@
+import { useEffect, useMemo, useState } from "react";
 import type { GestockViewModel, WarehouseOverview } from "../application/buildGestockViewModel";
 import type {
-  AgentResponsibility,
   BusinessModule,
-  DeliveryWorkstream,
+  ErpRole,
+  MockUser,
   ModuleStatus,
   OperationalAlert,
+  PurchasePipelineItem,
   RiskLevel
 } from "../domain/models";
 
@@ -12,10 +14,22 @@ interface AppProps {
   model: GestockViewModel;
 }
 
+type AppScreen = "loading" | "login" | "erp";
+type WorkspaceView = "dashboard" | "stocks" | "achats" | "entrepots" | "reporting" | "admin";
+
+const roleAccent: Record<ErpRole, string> = {
+  Direction: "executive",
+  Administrateur: "admin",
+  "Responsable Stock": "stock",
+  Acheteur: "buyer",
+  Magasinier: "warehouse",
+  Auditeur: "audit"
+};
+
 const statusLabel: Record<ModuleStatus, string> = {
-  active: "Activé",
-  available: "Disponible",
-  planned: "Prévu"
+  active: "Actif",
+  available: "À activer",
+  planned: "Roadmap"
 };
 
 const riskLabel: Record<RiskLevel, string> = {
@@ -25,395 +39,518 @@ const riskLabel: Record<RiskLevel, string> = {
   critical: "Critique"
 };
 
-const agentStatusLabel: Record<AgentResponsibility["status"], string> = {
-  assigned: "Assigné",
-  "in-progress": "En cours",
-  "ready-for-review": "À revoir"
-};
+const navigationItems: Array<{ id: WorkspaceView; label: string; icon: string }> = [
+  { id: "dashboard", label: "Pilotage", icon: "⌁" },
+  { id: "stocks", label: "Stocks", icon: "▦" },
+  { id: "achats", label: "Achats", icon: "◈" },
+  { id: "entrepots", label: "Entrepôts", icon: "▤" },
+  { id: "reporting", label: "Reporting", icon: "◎" },
+  { id: "admin", label: "Administration", icon: "⚙" }
+];
+
+const inventoryRows = [
+  {
+    sku: "LAB-REACT-009",
+    name: "Réactifs laboratoire",
+    site: "Hub Dakar",
+    stock: 420,
+    coverage: "9 jours",
+    status: "Critique"
+  },
+  {
+    sku: "PKG-BOX-120",
+    name: "Emballages carton renforcé",
+    site: "Plateforme Abidjan",
+    stock: 12400,
+    coverage: "46 jours",
+    status: "Stable"
+  },
+  {
+    sku: "AGR-SEED-044",
+    name: "Intrants agricoles premium",
+    site: "Antenne Cotonou",
+    stock: 1880,
+    coverage: "18 jours",
+    status: "À surveiller"
+  },
+  {
+    sku: "SPARE-MEC-231",
+    name: "Pièces détachées mécaniques",
+    site: "Hub Dakar",
+    stock: 312,
+    coverage: "27 jours",
+    status: "Inventaire"
+  }
+];
 
 export function App({ model }: AppProps) {
-  const navigationItems = [
-    { label: "Pilotage", href: "#pilotage" },
-    { label: "Stocks", href: "#stocks" },
-    { label: "Achats", href: "#achats" },
-    { label: "Entrepôts", href: "#stocks" },
-    { label: "Reporting", href: "#reporting" },
-    { label: "Sécurité", href: "#securite" },
-    { label: "Intégrations", href: "#integrations" },
-    { label: "Exécution IA", href: "#execution" }
-  ];
+  const [screen, setScreen] = useState<AppScreen>("loading");
+  const [selectedUserId, setSelectedUserId] = useState(model.mockUsers[0]?.id ?? "");
+  const [currentUser, setCurrentUser] = useState<MockUser | null>(null);
+  const [activeView, setActiveView] = useState<WorkspaceView>("dashboard");
+
+  const selectedUser = useMemo(
+    () => model.mockUsers.find((user) => user.id === selectedUserId) ?? model.mockUsers[0]!,
+    [model.mockUsers, selectedUserId]
+  );
+
+  const startLogin = () => {
+    window.setTimeout(() => setScreen("login"), 650);
+  };
+
+  if (screen === "loading") {
+    return <LoadingScreen onReady={startLogin} />;
+  }
+
+  if (screen === "login" || !currentUser) {
+    return (
+      <LoginScreen
+        model={model}
+        selectedUser={selectedUser}
+        selectedUserId={selectedUserId}
+        onSelectUser={setSelectedUserId}
+        onLogin={() => {
+          setCurrentUser(selectedUser);
+          setScreen("erp");
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar" aria-label="Navigation principale">
-        <div className="brand">
-          <span className="brand-mark">G</span>
+    <ErpWorkspace
+      model={model}
+      user={currentUser}
+      activeView={activeView}
+      onChangeView={setActiveView}
+      onLogout={() => {
+        setCurrentUser(null);
+        setScreen("login");
+        setActiveView("dashboard");
+      }}
+    />
+  );
+}
+
+function LoadingScreen({ onReady }: { onReady: () => void }) {
+  useEffect(() => {
+    onReady();
+  }, [onReady]);
+
+  return (
+    <main className="loading-screen">
+      <div className="loading-card">
+        <span className="brand-orb">G</span>
+        <div>
+          <p>Initialisation de l'espace ERP</p>
+          <h1>GESTOCK</h1>
+        </div>
+        <div className="loading-bar" aria-hidden="true">
+          <span />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function LoginScreen({
+  model,
+  selectedUser,
+  selectedUserId,
+  onSelectUser,
+  onLogin
+}: {
+  model: GestockViewModel;
+  selectedUser: MockUser;
+  selectedUserId: string;
+  onSelectUser: (id: string) => void;
+  onLogin: () => void;
+}) {
+  return (
+    <main className="login-screen">
+      <section className="login-panel">
+        <div className="login-brand">
+          <span className="brand-orb">G</span>
           <div>
             <strong>GESTOCK</strong>
-            <small>Supply Chain Cloud</small>
+            <small>ERP Cloud Supply Chain</small>
           </div>
         </div>
 
-        <nav className="nav-list">
-          {navigationItems.map((item) => (
-            <a key={item.label} href={item.href}>
-              {item.label}
-            </a>
-          ))}
-        </nav>
+        <div className="login-copy">
+          <span className="eyebrow">Connexion de démonstration</span>
+          <h1>Choisissez un rôle et entrez dans l'interface ERP.</h1>
+          <p>
+            Les utilisateurs ci-dessous simulent les profils réels de la plateforme :
+            direction, administration, achats, stocks, magasin et audit.
+          </p>
+        </div>
 
-        <div className="tenant-card">
-          <span>Tenant actif</span>
+        <div className="tenant-preview">
+          <span>Organisation</span>
           <strong>{model.organization.name}</strong>
           <small>{model.tenantSummary}</small>
         </div>
+      </section>
+
+      <section className="login-card" aria-label="Sélection du profil">
+        <div className="role-selector">
+          {model.mockUsers.map((user) => (
+            <button
+              className={`role-option ${selectedUserId === user.id ? "selected" : ""}`}
+              key={user.id}
+              onClick={() => onSelectUser(user.id)}
+              type="button"
+            >
+              <span className={`role-dot ${roleAccent[user.role]}`} />
+              <div>
+                <strong>{user.role}</strong>
+                <small>{user.email}</small>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <div className="selected-profile">
+          <span className={`profile-accent ${roleAccent[selectedUser.role]}`} />
+          <div>
+            <small>Session simulée</small>
+            <h2>{selectedUser.name}</h2>
+            <p>{selectedUser.description}</p>
+          </div>
+          <div className="permission-list">
+            {selectedUser.permissions.map((permission) => (
+              <span key={permission}>{permission}</span>
+            ))}
+          </div>
+          <button className="primary-action" type="button" onClick={onLogin}>
+            Se connecter comme {selectedUser.role}
+          </button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function ErpWorkspace({
+  model,
+  user,
+  activeView,
+  onChangeView,
+  onLogout
+}: {
+  model: GestockViewModel;
+  user: MockUser;
+  activeView: WorkspaceView;
+  onChangeView: (view: WorkspaceView) => void;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="erp-shell">
+      <aside className="erp-sidebar">
+        <div className="sidebar-brand">
+          <span className="brand-orb">G</span>
+          <div>
+            <strong>GESTOCK</strong>
+            <small>{model.organization.plan}</small>
+          </div>
+        </div>
+
+        <nav className="erp-nav" aria-label="Navigation ERP">
+          {navigationItems.map((item) => (
+            <button
+              className={activeView === item.id ? "active" : ""}
+              key={item.id}
+              onClick={() => onChangeView(item.id)}
+              type="button"
+            >
+              <span>{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-session">
+          <small>Connecté comme</small>
+          <strong>{user.name}</strong>
+          <span>{user.role}</span>
+          <button type="button" onClick={onLogout}>
+            Déconnexion
+          </button>
+        </div>
       </aside>
 
-      <main>
-        <section className="hero" id="pilotage">
-          <div className="hero-copy">
-            <span className="eyebrow">SaaS Enterprise multi-tenant</span>
-            <h1>La tour de contrôle Cloud pour stocks, achats et supply chain.</h1>
-            <p>
-              GESTOCK centralise les opérations logistiques, les entrepôts, les fournisseurs,
-              les inventaires et les performances dans une expérience moderne pensée pour les
-              organisations africaines.
-            </p>
-            <div className="hero-actions">
-              <a className="button primary" href="#modules">
-                Explorer les modules
-              </a>
-              <a className="button secondary" href="#architecture">
-                Voir l'architecture
-              </a>
-            </div>
-          </div>
-
-          <div className="command-center" aria-label="Résumé opérationnel">
-            <div className="command-header">
-              <div>
-                <span>Risque opérationnel</span>
-                <strong>{model.highestRiskLabel}</strong>
-              </div>
-              <span className="live-pill">Temps réel</span>
-            </div>
-            <div className="command-grid">
-              {model.kpis.map((kpi) => (
-                <article className={`kpi-card ${kpi.sentiment}`} key={kpi.label}>
-                  <span>{kpi.label}</span>
-                  <strong>{kpi.value}</strong>
-                  <small>{kpi.trend}</small>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="section two-columns" id="stocks">
+      <main className="erp-main">
+        <header className="topbar">
           <div>
-            <span className="eyebrow">Vision opérationnelle</span>
-            <h2>Stocks multi-sites et entrepôts supervisés en continu.</h2>
-            <p>
-              Les décideurs visualisent la couverture, la capacité, les ruptures, les transferts
-              et les mouvements sensibles par organisation, société, site et entrepôt.
-            </p>
+            <span className="breadcrumb">GESTOCK / {navigationItems.find((i) => i.id === activeView)?.label}</span>
+            <h1>{titleForView(activeView)}</h1>
           </div>
-          <div className="warehouse-grid">
-            {model.warehouseOverview.map((warehouse) => (
-              <WarehouseCard key={warehouse.id} warehouse={warehouse} />
-            ))}
+          <div className="topbar-actions">
+            <span>{model.organization.language}</span>
+            <span>{model.organization.currency}</span>
+            <strong>{model.organization.timezone}</strong>
           </div>
-        </section>
+        </header>
 
-        <section className="section" id="modules">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Architecture modulaire</span>
-              <h2>Modules activables selon la maturité de chaque client.</h2>
-            </div>
-            <div className="metric-chip">
-              <strong>{model.activeModuleCount}</strong>
-              <span>modules actifs</span>
-            </div>
-            <div className="metric-chip">
-              <strong>{model.enabledCapabilityCount}</strong>
-              <span>capacités en production</span>
-            </div>
-          </div>
-
-          <div className="module-grid">
-            {model.modules.map((businessModule) => (
-              <ModuleCard key={businessModule.id} businessModule={businessModule} />
-            ))}
-          </div>
-        </section>
-
-        <section className="section two-columns" id="achats">
-          <div>
-            <span className="eyebrow">Approvisionnement intelligent</span>
-            <h2>Pipeline achats connecté aux besoins réels du stock.</h2>
-            <p>
-              Les workflows relient prévision, demande d'achat, validation, commande fournisseur,
-              réception et litiges avec une traçabilité complète.
-            </p>
-            <div className="flow-list">
-              {model.flows.map((flow) => (
-                <article key={flow.step}>
-                  <strong>{flow.step}</strong>
-                  <span>{flow.description}</span>
-                  <small>{flow.automation}</small>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="table-card">
-            <div className="table-title">
-              <strong>Commandes fournisseurs</strong>
-              <span>Vue consolidée</span>
-            </div>
-            {model.purchasePipeline.map((purchase) => (
-              <div className="table-row" key={`${purchase.supplier}-${purchase.category}`}>
-                <div>
-                  <strong>{purchase.supplier}</strong>
-                  <small>{purchase.category}</small>
-                </div>
-                <span>{purchase.amount}</span>
-                <span>{purchase.eta}</span>
-                <em>{purchase.status}</em>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="section two-columns" id="reporting">
-          <div className="report-panel">
-            <span className="eyebrow">Reporting & BI</span>
-            <h2>Tableaux de bord configurables pour la prise de décision.</h2>
-            <div className="report-grid">
-              {model.reports.map((report) => (
-                <article key={report.title}>
-                  <span>{report.title}</span>
-                  <strong>{report.metric}</strong>
-                  <p>{report.insight}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="ai-card">
-            <span>Fondations IA</span>
-            <h3>Prévisions, recommandations et détection d'anomalies.</h3>
-            <p>
-              Le modèle applicatif isole les événements métier pour permettre demain du forecast,
-              du scoring rupture et des recommandations d'achat sans refondre les domaines.
-            </p>
-          </div>
-        </section>
-
-        <section className="section" id="securite">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Sécurité Enterprise</span>
-              <h2>Contrôles conçus pour gouvernance, audit et conformité.</h2>
-            </div>
-          </div>
-          <div className="security-grid">
-            {model.securityControls.map((control) => (
-              <article key={control.title}>
-                <strong>{control.title}</strong>
-                <p>{control.description}</p>
-                <span>{control.coverage}</span>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="section two-columns" id="integrations">
-          <div>
-            <span className="eyebrow">API-first</span>
-            <h2>Connecteurs pour ERP, finance, CRM, douane et terrain.</h2>
-            <p>
-              GESTOCK prépare une couche d'intégration robuste pour synchroniser données de base,
-              commandes, écritures, documents et événements logistiques.
-            </p>
-            <div className="integration-list">
-              {model.integrations.map((integration) => (
-                <article key={integration.system}>
-                  <strong>{integration.system}</strong>
-                  <span>{integration.mode}</span>
-                  <p>{integration.purpose}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="mobile-card">
-            <span className="eyebrow">Mobile first</span>
-            <h2>Opérations terrain sur smartphone et tablette.</h2>
-            {model.mobile.map((capability) => (
-              <article key={capability.title}>
-                <strong>{capability.title}</strong>
-                <p>{capability.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="section architecture" id="architecture">
-          <span className="eyebrow">Socle technique</span>
-          <h2>Architecture DDD prête pour une plateforme Cloud Native.</h2>
-          <div className="pillar-grid">
-            {model.platformPillars.map((pillar) => (
-              <span key={pillar}>{pillar}</span>
-            ))}
-          </div>
-        </section>
-
-        <section className="section execution" id="execution">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">Orchestration multi-agents</span>
-              <h2>Responsabilités assignées pour industrialiser GESTOCK.</h2>
-              <p>
-                Chaque agent IA porte un périmètre clair afin d'accélérer le backend, les règles
-                métier et l'expérience produit sans mélanger les responsabilités.
-              </p>
-            </div>
-            <div className="metric-chip">
-              <strong>{model.assignedAgentCount}</strong>
-              <span>agents mobilisés</span>
-            </div>
-            <div className="metric-chip">
-              <strong>{model.deliveryPhaseCount}</strong>
-              <span>phases pilotées</span>
-            </div>
-          </div>
-
-          <div className="agent-grid">
-            {model.agentResponsibilities.map((agent) => (
-              <AgentCard key={agent.agent} agent={agent} />
-            ))}
-          </div>
-
-          <div className="workstream-grid">
-            {model.deliveryWorkstreams.map((workstream) => (
-              <WorkstreamCard key={workstream.phase} workstream={workstream} />
-            ))}
-          </div>
-        </section>
-
-        <section className="section alerts" aria-label="Alertes opérationnelles">
-          <div>
-            <span className="eyebrow">Alertes prioritaires</span>
-            <h2>Les opérations sensibles restent visibles et actionnables.</h2>
-          </div>
-          <div className="alert-grid">
-            {model.alerts.map((alert) => (
-              <AlertCard key={alert.id} alert={alert} />
-            ))}
-          </div>
-        </section>
+        {activeView === "dashboard" && <DashboardView model={model} user={user} />}
+        {activeView === "stocks" && <StocksView model={model} />}
+        {activeView === "achats" && <PurchasingView purchases={model.purchasePipeline} />}
+        {activeView === "entrepots" && <WarehouseView warehouses={model.warehouseOverview} />}
+        {activeView === "reporting" && <ReportingView model={model} />}
+        {activeView === "admin" && <AdminView model={model} user={user} />}
       </main>
     </div>
   );
 }
 
-function WarehouseCard({ warehouse }: { warehouse: WarehouseOverview }) {
+function DashboardView({ model, user }: { model: GestockViewModel; user: MockUser }) {
   return (
-    <article className="warehouse-card">
+    <div className="workspace-grid">
+      <section className="panel hero-panel">
+        <div>
+          <span className="eyebrow">Tableau de bord ERP</span>
+          <h2>Bienvenue, {user.name}</h2>
+          <p>
+            Votre périmètre : <strong>{user.scope}</strong>. Les indicateurs sont filtrés selon
+            votre rôle simulé et votre organisation.
+          </p>
+        </div>
+        <div className="risk-widget">
+          <span>Risque opérationnel</span>
+          <strong>{model.highestRiskLabel}</strong>
+          <small>Basé sur {model.alerts.length} alertes actives</small>
+        </div>
+      </section>
+
+      <section className="kpi-strip">
+        {model.kpis.map((kpi) => (
+          <article className={`kpi-tile ${kpi.sentiment}`} key={kpi.label}>
+            <span>{kpi.label}</span>
+            <strong>{kpi.value}</strong>
+            <small>{kpi.trend}</small>
+          </article>
+        ))}
+      </section>
+
+      <section className="panel span-8">
+        <PanelHeader title="Alertes prioritaires" action="Voir tout" />
+        <div className="alert-list">
+          {model.alerts.map((alert) => (
+            <AlertRow alert={alert} key={alert.id} />
+          ))}
+        </div>
+      </section>
+
+      <section className="panel span-4">
+        <PanelHeader title="Modules actifs" action={`${model.activeModuleCount} actifs`} />
+        <div className="module-mini-list">
+          {model.modules.slice(0, 6).map((module) => (
+            <ModuleMini module={module} key={module.id} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StocksView({ model }: { model: GestockViewModel }) {
+  return (
+    <div className="workspace-grid">
+      <section className="panel span-12">
+        <PanelHeader title="Articles et disponibilité" action="Nouvel article" />
+        <div className="data-table">
+          <div className="data-row heading">
+            <span>SKU</span>
+            <span>Article</span>
+            <span>Site</span>
+            <span>Stock</span>
+            <span>Couverture</span>
+            <span>Statut</span>
+          </div>
+          {inventoryRows.map((row) => (
+            <div className="data-row" key={row.sku}>
+              <strong>{row.sku}</strong>
+              <span>{row.name}</span>
+              <span>{row.site}</span>
+              <span>{row.stock.toLocaleString("fr-FR")}</span>
+              <span>{row.coverage}</span>
+              <em className={row.status === "Critique" ? "danger" : ""}>{row.status}</em>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel span-6">
+        <PanelHeader title="Workflow rupture vers achat" action="Simulé" />
+        <div className="timeline">
+          {model.flows.map((flow) => (
+            <article key={flow.step}>
+              <strong>{flow.step}</strong>
+              <span>{flow.description}</span>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel span-6">
+        <PanelHeader title="Entrepôts sous tension" action={`${model.warehouseOverview.length} sites`} />
+        <div className="warehouse-list">
+          {model.warehouseOverview.slice(0, 4).map((warehouse) => (
+            <WarehouseCompact warehouse={warehouse} key={warehouse.id} />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PurchasingView({ purchases }: { purchases: PurchasePipelineItem[] }) {
+  return (
+    <div className="workspace-grid">
+      <section className="panel span-12">
+        <PanelHeader title="Pipeline achats fournisseurs" action="Créer demande" />
+        <div className="purchase-board">
+          {purchases.map((purchase) => (
+            <article key={`${purchase.supplier}-${purchase.category}`}>
+              <span>{purchase.status}</span>
+              <h3>{purchase.supplier}</h3>
+              <p>{purchase.category}</p>
+              <footer>
+                <strong>{purchase.amount}</strong>
+                <em>ETA {purchase.eta}</em>
+              </footer>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function WarehouseView({ warehouses }: { warehouses: WarehouseOverview[] }) {
+  return (
+    <div className="workspace-grid">
+      {warehouses.map((warehouse) => (
+        <section className="panel warehouse-panel" key={warehouse.id}>
+          <WarehouseCompact warehouse={warehouse} />
+          <div className="warehouse-metrics">
+            <span>Capacité {warehouse.capacityRate}%</span>
+            <span>Service {warehouse.serviceLevel}%</span>
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ReportingView({ model }: { model: GestockViewModel }) {
+  return (
+    <div className="workspace-grid">
+      {model.reports.map((report) => (
+        <section className="panel report-card" key={report.title}>
+          <span>{report.title}</span>
+          <strong>{report.metric}</strong>
+          <p>{report.insight}</p>
+        </section>
+      ))}
+      <section className="panel span-12">
+        <PanelHeader title="Fondations IA et BI" action="Roadmap" />
+        <p className="muted">
+          Les événements métier du backend préparent les prévisions de rupture, recommandations
+          d'achat, scoring fournisseur et analyses avancées.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+function AdminView({ model, user }: { model: GestockViewModel; user: MockUser }) {
+  return (
+    <div className="workspace-grid">
+      <section className="panel span-5">
+        <PanelHeader title="Profil et permissions" action={user.role} />
+        <h3>{user.name}</h3>
+        <p className="muted">{user.description}</p>
+        <div className="permission-list">
+          {user.permissions.map((permission) => (
+            <span key={permission}>{permission}</span>
+          ))}
+        </div>
+      </section>
+      <section className="panel span-7">
+        <PanelHeader title="Sécurité Enterprise" action="RBAC" />
+        <div className="security-list">
+          {model.securityControls.map((control) => (
+            <article key={control.title}>
+              <strong>{control.title}</strong>
+              <span>{control.coverage}</span>
+              <p>{control.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function PanelHeader({ title, action }: { title: string; action: string }) {
+  return (
+    <div className="panel-header">
+      <h2>{title}</h2>
+      <button type="button">{action}</button>
+    </div>
+  );
+}
+
+function AlertRow({ alert }: { alert: OperationalAlert }) {
+  return (
+    <article className={`alert-row ${alert.level}`}>
+      <span>{riskLabel[alert.level]}</span>
+      <div>
+        <strong>{alert.title}</strong>
+        <p>{alert.detail}</p>
+      </div>
+      <em>{alert.dueIn}</em>
+    </article>
+  );
+}
+
+function ModuleMini({ module }: { module: BusinessModule }) {
+  return (
+    <article className="module-mini">
+      <div>
+        <strong>{module.name}</strong>
+        <span>{module.domain}</span>
+      </div>
+      <em>{statusLabel[module.status]}</em>
+    </article>
+  );
+}
+
+function WarehouseCompact({ warehouse }: { warehouse: WarehouseOverview }) {
+  return (
+    <article className="warehouse-compact">
       <div>
         <strong>{warehouse.name}</strong>
         <span>
           {warehouse.siteName} - {warehouse.country}
         </span>
       </div>
-      <div className="capacity">
-        <span>Capacité utilisée</span>
-        <strong>{warehouse.capacityRate}%</strong>
-        <progress value={warehouse.capacityRate} max="100" />
-      </div>
-      <div className="service-level">
-        <span>Service</span>
-        <strong>{warehouse.serviceLevel}%</strong>
-      </div>
+      <progress value={warehouse.capacityRate} max="100" />
     </article>
   );
 }
 
-function ModuleCard({ businessModule }: { businessModule: BusinessModule }) {
-  return (
-    <article className={`module-card ${businessModule.status}`}>
-      <div className="module-topline">
-        <span>{businessModule.domain}</span>
-        <em>{statusLabel[businessModule.status]}</em>
-      </div>
-      <h3>{businessModule.name}</h3>
-      <p>{businessModule.tagline}</p>
-      <ul>
-        {businessModule.capabilities.map((capability) => (
-          <li key={capability}>{capability}</li>
-        ))}
-      </ul>
-    </article>
-  );
-}
+function titleForView(view: WorkspaceView): string {
+  const titles: Record<WorkspaceView, string> = {
+    dashboard: "Centre de pilotage",
+    stocks: "Stocks et articles",
+    achats: "Achats et approvisionnements",
+    entrepots: "Entrepôts et mouvements",
+    reporting: "Reporting et BI",
+    admin: "Administration et sécurité"
+  };
 
-function AlertCard({ alert }: { alert: OperationalAlert }) {
-  return (
-    <article className={`alert-card ${alert.level}`}>
-      <span>{riskLabel[alert.level]}</span>
-      <h3>{alert.title}</h3>
-      <p>{alert.detail}</p>
-      <footer>
-        <strong>{alert.owner}</strong>
-        <em>{alert.dueIn}</em>
-      </footer>
-    </article>
-  );
-}
-
-function AgentCard({ agent }: { agent: AgentResponsibility }) {
-  return (
-    <article className={`agent-card ${agent.status}`}>
-      <div className="agent-card-header">
-        <span>{agentStatusLabel[agent.status]}</span>
-        <strong>{agent.agent}</strong>
-      </div>
-      <h3>{agent.role}</h3>
-      <p>{agent.mission}</p>
-      <div>
-        <small>Responsabilités</small>
-        <ul>
-          {agent.ownership.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <small>Livrables immédiats</small>
-        <ul>
-          {agent.immediateDeliverables.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
-    </article>
-  );
-}
-
-function WorkstreamCard({ workstream }: { workstream: DeliveryWorkstream }) {
-  return (
-    <article className="workstream-card">
-      <span>{workstream.leadAgent}</span>
-      <h3>{workstream.phase}</h3>
-      <p>{workstream.goal}</p>
-      <ul>
-        {workstream.deliverables.map((deliverable) => (
-          <li key={deliverable}>{deliverable}</li>
-        ))}
-      </ul>
-      <em>{workstream.dependency}</em>
-    </article>
-  );
+  return titles[view];
 }
