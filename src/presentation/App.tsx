@@ -194,6 +194,7 @@ export function App({ model }: AppProps) {
   if (screen === "login") {
     return (
       <LoginScreen
+        demoUsers={model.mockUsers}
         loginError={loginError}
         onAction={setScreen}
         onLogin={handleLogin}
@@ -241,7 +242,14 @@ export function App({ model }: AppProps) {
     );
   }
 
-  return <LoginScreen loginError={loginError} onAction={setScreen} onLogin={handleLogin} />;
+  return (
+    <LoginScreen
+      demoUsers={model.mockUsers}
+      loginError={loginError}
+      onAction={setScreen}
+      onLogin={handleLogin}
+    />
+  );
 }
 
 function persistSession(session: ActiveSession, destination: PostLoginDestination) {
@@ -259,14 +267,24 @@ function persistSession(session: ActiveSession, destination: PostLoginDestinatio
 }
 
 function LoginScreen({
+  demoUsers,
   loginError,
   onAction,
   onLogin
 }: {
+  demoUsers: MockUser[];
   loginError: string | null;
   onAction: (screen: Screen) => void;
   onLogin: (formData: FormData) => void;
 }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const fillDemoUser = (user: MockUser) => {
+    setEmail(user.email);
+    setPassword(user.password);
+  };
+
   return (
     <main className="login-page" aria-label="Connexion GESTOCK">
       <section className="brand-panel" aria-label="Présentation de GESTOCK">
@@ -327,7 +345,13 @@ function LoginScreen({
             <span>Adresse e-mail</span>
             <div className="input-shell">
               <i aria-hidden="true">✉</i>
-              <input name="email" placeholder="Entrez votre adresse e-mail" type="email" />
+              <input
+                name="email"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Entrez votre adresse e-mail"
+                type="email"
+                value={email}
+              />
             </div>
           </label>
 
@@ -335,7 +359,13 @@ function LoginScreen({
             <span>Mot de passe</span>
             <div className="input-shell">
               <i aria-hidden="true">▣</i>
-              <input name="password" placeholder="Entrez votre mot de passe" type="password" />
+              <input
+                name="password"
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Entrez votre mot de passe"
+                type="password"
+                value={password}
+              />
               <button aria-label="Afficher le mot de passe" type="button">
                 ◉
               </button>
@@ -351,6 +381,21 @@ function LoginScreen({
               Mot de passe oublié ?
             </button>
           </div>
+
+          <details className="demo-user-picker">
+            <summary>Comptes de test</summary>
+            <div>
+              {demoUsers.map((user) => (
+                <button key={user.id} onClick={() => fillDemoUser(user)} type="button">
+                  <span>
+                    <strong>{user.name}</strong>
+                    <small>{user.role} · {user.email}</small>
+                  </span>
+                  <em>{user.organizations.length > 1 ? "Multi-org" : "Direct"}</em>
+                </button>
+              ))}
+            </div>
+          </details>
 
           {loginError ? (
             <p className="login-error" role="alert">
