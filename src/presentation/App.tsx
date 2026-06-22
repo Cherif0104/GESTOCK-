@@ -874,6 +874,12 @@ function DashboardScreen({
   const isCatalogue = activeNav === "Catalogue";
   const [selectedArticle, setSelectedArticle] = useState<ArticleRecord | null>(null);
   const [selectedCatalogProduct, setSelectedCatalogProduct] = useState<CatalogProduct | null>(null);
+  const searchPlaceholder =
+    activeNav === "Articles"
+      ? selectedArticle
+        ? "Rechercher (articles, commandes, fournisseurs...)"
+        : "Rechercher (articles, références, codes-barres...)"
+      : "Rechercher (articles, commandes, fournisseurs...)";
 
   return (
     <main className="erp-shell">
@@ -921,10 +927,11 @@ function DashboardScreen({
 
       <section className="erp-main">
         <header className="erp-topbar">
-          <button type="button">☰</button>
+          <button onClick={() => onAction("Menu latéral compact activé en mode mock.")} type="button">☰</button>
           <label>
             <span>⌕</span>
-            <input placeholder="Rechercher (articles, commandes, fournisseurs...)" />
+            <input placeholder={searchPlaceholder} />
+            <kbd>Ctrl + K</kbd>
           </label>
           <div className="topbar-actions">
             <button onClick={() => onAction("Notifications : 12 alertes critiques à traiter.")} type="button">♧<em>12</em></button>
@@ -1146,8 +1153,8 @@ function ArticlesModule({
           ))}
           <button onClick={() => onAction("Filtres réinitialisés.")} type="button">↻ Réinitialiser</button>
           <div>
-            <button className="active" type="button">▦</button>
-            <button type="button">☷</button>
+            <button className="active" onClick={() => onAction("Vue grille Articles activée en mode mock.")} type="button">▦</button>
+            <button onClick={() => onAction("Vue liste Articles activée en mode mock.")} type="button">☷</button>
             <button onClick={() => onAction("Paramètres de colonnes ouverts.")} type="button">⚙</button>
           </div>
         </div>
@@ -1155,7 +1162,7 @@ function ArticlesModule({
         <table className="articles-table">
           <thead>
             <tr>
-              <th><input type="checkbox" /></th>
+              <th><input aria-label="Sélectionner tous les articles" onChange={() => onAction("Sélection de tous les articles activée en mode mock.")} type="checkbox" /></th>
               <th>Référence ↕</th>
               <th>Désignation</th>
               <th>Catégorie</th>
@@ -1169,7 +1176,7 @@ function ArticlesModule({
           <tbody>
             {articleItems.map((item) => (
               <tr key={item.reference}>
-                <td><input type="checkbox" /></td>
+                <td><input aria-label={`Sélectionner ${item.reference}`} onChange={() => onAction(`${item.reference} sélectionné en mode mock.`)} type="checkbox" /></td>
                 <td>
                   <button className="article-reference" onClick={() => onOpenArticle(item)} type="button">
                     <span>{item.icon}</span>
@@ -1232,7 +1239,7 @@ function ArticleDetail({
       </div>
 
       <header className="article-detail-header">
-        <ProductVisual label={article.icon} />
+        <ProductVisual label={article.icon} name={article.designation} />
         <div className="article-identity">
           <em className={`status-pill ${statusClass(article.status)}`}>{article.status}</em>
           <h1>{article.designation}</h1>
@@ -1245,7 +1252,7 @@ function ArticleDetail({
             </div>
             <div>
               <dt>Code-barres (EAN13)</dt>
-              <dd>{article.barcode}</dd>
+              <dd className="barcode-value">{article.barcode}<span aria-hidden="true" /></dd>
             </div>
             <div>
               <dt>Catégorie</dt>
@@ -1253,7 +1260,7 @@ function ArticleDetail({
             </div>
             <div>
               <dt>Unité de vente</dt>
-              <dd><button type="button">{article.unit} (20) ⌄</button></dd>
+              <dd><button onClick={() => onAction("Sélecteur unité de vente ouvert.")} type="button">{article.unit} (20) ⌄</button></dd>
             </div>
           </dl>
           <p>
@@ -1323,9 +1330,9 @@ function ArticleDetail({
               />
               <h2>Images</h2>
               <div className="article-images">
-                <ProductVisual label="PARA" />
-                <ProductVisual label="TAB" />
-                <ProductVisual label="BOX" />
+                <ProductVisual label="PARA" name="Paracétamol" />
+                <ProductVisual label="TAB" name="Blister" />
+                <ProductVisual label="BOX" name="Boîte" />
                 <button onClick={() => onAction("Ajout d'image produit ouvert.")} type="button">＋</button>
               </div>
               <h2>Documents associés</h2>
@@ -1363,7 +1370,7 @@ function ArticleDetail({
                 </section>
               ))}
             </div>
-            <p>Dernière mise à jour : 31/05/2024 14:32 <button type="button">↻ Actualiser</button></p>
+            <p>Dernière mise à jour : 31/05/2024 14:32 <button onClick={() => onAction("Aperçu stock temps réel actualisé en mock.")} type="button">↻ Actualiser</button></p>
           </article>
 
           <SideCard
@@ -1785,10 +1792,11 @@ function SideCard({ title, rows }: { title: string; rows: string[][] }) {
   );
 }
 
-function ProductVisual({ label }: { label: string }) {
+function ProductVisual({ label, name = "Produit" }: { label: string; name?: string }) {
   return (
     <div className="product-visual">
       <span>{label}</span>
+      <b>{name}</b>
       <small>500mg</small>
     </div>
   );
