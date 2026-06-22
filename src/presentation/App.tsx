@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { GestockViewModel, WarehouseOverview } from "../application/buildGestockViewModel";
 import type {
   BusinessModule,
-  ErpRole,
   MockUser,
   ModuleStatus,
   OperationalAlert,
@@ -16,15 +15,6 @@ interface AppProps {
 
 type AppScreen = "loading" | "login" | "erp";
 type WorkspaceView = "dashboard" | "stocks" | "achats" | "entrepots" | "reporting" | "admin";
-
-const roleAccent: Record<ErpRole, string> = {
-  Direction: "executive",
-  Administrateur: "admin",
-  "Responsable Stock": "stock",
-  Acheteur: "buyer",
-  Magasinier: "warehouse",
-  Auditeur: "audit"
-};
 
 const statusLabel: Record<ModuleStatus, string> = {
   active: "Actif",
@@ -84,14 +74,10 @@ const inventoryRows = [
 
 export function App({ model }: AppProps) {
   const [screen, setScreen] = useState<AppScreen>("loading");
-  const [selectedUserId, setSelectedUserId] = useState(model.mockUsers[0]?.id ?? "");
   const [currentUser, setCurrentUser] = useState<MockUser | null>(null);
   const [activeView, setActiveView] = useState<WorkspaceView>("dashboard");
 
-  const selectedUser = useMemo(
-    () => model.mockUsers.find((user) => user.id === selectedUserId) ?? model.mockUsers[0]!,
-    [model.mockUsers, selectedUserId]
-  );
+  const selectedUser = useMemo(() => model.mockUsers[0]!, [model.mockUsers]);
 
   const startLogin = () => {
     window.setTimeout(() => setScreen("login"), 650);
@@ -105,9 +91,6 @@ export function App({ model }: AppProps) {
     return (
       <LoginScreen
         model={model}
-        selectedUser={selectedUser}
-        selectedUserId={selectedUserId}
-        onSelectUser={setSelectedUserId}
         onLogin={() => {
           setCurrentUser(selectedUser);
           setScreen("erp");
@@ -154,77 +137,152 @@ function LoadingScreen({ onReady }: { onReady: () => void }) {
 
 function LoginScreen({
   model,
-  selectedUser,
-  selectedUserId,
-  onSelectUser,
   onLogin
 }: {
   model: GestockViewModel;
-  selectedUser: MockUser;
-  selectedUserId: string;
-  onSelectUser: (id: string) => void;
   onLogin: () => void;
 }) {
   return (
     <main className="login-screen">
-      <section className="login-panel">
-        <div className="login-brand">
-          <span className="brand-orb">G</span>
-          <div>
-            <strong>GESTOCK</strong>
-            <small>ERP Cloud Supply Chain</small>
+      <section className="login-hero-panel" aria-label="Présentation GESTOCK">
+        <div className="login-logo-lockup">
+          <strong>
+            <span>GES</span>TOCK
+          </strong>
+          <div className="logo-cube" aria-hidden="true">
+            ◆
           </div>
+          <small>PLATEFORME DE GESTION DES STOCKS ET APPROVISIONNEMENTS</small>
         </div>
 
-        <div className="login-copy">
-          <span className="eyebrow">Connexion de démonstration</span>
-          <h1>Choisissez un rôle et entrez dans l'interface ERP.</h1>
-          <p>
-            Les utilisateurs ci-dessous simulent les profils réels de la plateforme :
-            direction, administration, achats, stocks, magasin et audit.
-          </p>
+        <div className="login-hero-copy">
+          <h1>
+            Maîtrisez <span>vos stocks.</span>
+            <br />
+            Optimisez votre chaîne d'approvisionnement.
+          </h1>
         </div>
 
-        <div className="tenant-preview">
-          <span>Organisation</span>
-          <strong>{model.organization.name}</strong>
-          <small>{model.tenantSummary}</small>
-        </div>
-      </section>
-
-      <section className="login-card" aria-label="Sélection du profil">
-        <div className="role-selector">
-          {model.mockUsers.map((user) => (
-            <button
-              className={`role-option ${selectedUserId === user.id ? "selected" : ""}`}
-              key={user.id}
-              onClick={() => onSelectUser(user.id)}
-              type="button"
-            >
-              <span className={`role-dot ${roleAccent[user.role]}`} />
+        <div className="login-benefits">
+          {[
+            {
+              icon: "▧",
+              title: "Visibilité en temps réel",
+              text: "Suivez vos stocks et mouvements en direct."
+            },
+            {
+              icon: "▥",
+              title: "Performance opérationnelle",
+              text: "Prenez les bonnes décisions, plus rapidement."
+            },
+            {
+              icon: "◷",
+              title: "Traçabilité complète",
+              text: "Suivez chaque article, lot et mouvement."
+            },
+            {
+              icon: "♢",
+              title: "Alertes intelligentes",
+              text: "Anticipez les ruptures et péremptions."
+            }
+          ].map((benefit) => (
+            <article className="login-benefit-card" key={benefit.title}>
+              <span>{benefit.icon}</span>
               <div>
-                <strong>{user.role}</strong>
-                <small>{user.email}</small>
+                <strong>{benefit.title}</strong>
+                <p>{benefit.text}</p>
               </div>
-            </button>
+            </article>
           ))}
         </div>
 
-        <div className="selected-profile">
-          <span className={`profile-accent ${roleAccent[selectedUser.role]}`} />
+        <small className="login-copyright">© 2024 GESTOCK. Tous droits réservés.</small>
+      </section>
+
+      <section className="login-auth-area" aria-label="Connexion">
+        <button className="language-switch" type="button">
+          ◎ Français⌄
+        </button>
+        <div className="dot-pattern" aria-hidden="true" />
+
+        <div className="auth-card">
           <div>
-            <small>Session simulée</small>
-            <h2>{selectedUser.name}</h2>
-            <p>{selectedUser.description}</p>
+            <h2>
+              Connexion à <span>GESTOCK</span>
+            </h2>
+            <p>Accédez à votre espace de gestion</p>
           </div>
-          <div className="permission-list">
-            {selectedUser.permissions.map((permission) => (
-              <span key={permission}>{permission}</span>
-            ))}
-          </div>
-          <button className="primary-action" type="button" onClick={onLogin}>
-            Se connecter comme {selectedUser.role}
-          </button>
+
+          <form
+            className="auth-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onLogin();
+            }}
+          >
+            <label>
+              <span>Adresse e-mail</span>
+              <div className="auth-input">
+                <span aria-hidden="true">✉</span>
+                <input placeholder="Entrez votre adresse e-mail" type="email" />
+              </div>
+            </label>
+
+            <label>
+              <span>Mot de passe</span>
+              <div className="auth-input">
+                <span aria-hidden="true">▣</span>
+                <input placeholder="Entrez votre mot de passe" type="password" />
+                <button aria-label="Afficher le mot de passe" type="button">
+                  ◉
+                </button>
+              </div>
+            </label>
+
+            <div className="auth-row">
+              <label className="remember-me">
+                <input defaultChecked type="checkbox" />
+                <span>Se souvenir de moi</span>
+              </label>
+              <button type="button">Mot de passe oublié ?</button>
+            </div>
+
+            <button className="auth-submit" type="submit">
+              Se connecter
+            </button>
+
+            <div className="auth-divider">
+              <span />
+              <small>OU</small>
+              <span />
+            </div>
+
+            <button className="sso-button" type="button" onClick={onLogin}>
+              ▥ Se connecter avec SSO / Enterprise
+            </button>
+          </form>
+
+          <footer className="first-login">
+            <strong>Première connexion à GESTOCK ?</strong>
+            <button type="button">Contacter votre administrateur</button>
+          </footer>
+        </div>
+
+        <div className="login-trust-row">
+          {[
+            ["♢", "Sécurisé", "Données chiffrées"],
+            ["☁", "Hébergé au Sénégal", "Haute disponibilité"],
+            ["♙", "Multi-utilisateurs", "Accès par rôles"],
+            ["◷", "Audit complet", "Traçabilité totale"]
+          ].map(([icon, title, text]) => (
+            <article key={title}>
+              <span>{icon}</span>
+              <div>
+                <strong>{title}</strong>
+                <small>{text}</small>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
     </main>
