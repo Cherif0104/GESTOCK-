@@ -118,6 +118,30 @@ export const gestockSnapshot: GestockSnapshot = {
           role: "Direction",
           users: 64,
           warehouses: 3
+        },
+        {
+          id: "org-gestock-bf",
+          name: "GESTOCK Burkina Faso",
+          country: "Burkina Faso",
+          city: "Ouagadougou",
+          domain: "gestock-bf.bf",
+          status: "active",
+          isDefault: false,
+          role: "Direction",
+          users: 45,
+          warehouses: 2
+        },
+        {
+          id: "org-gestock-bj",
+          name: "GESTOCK Bénin",
+          country: "Bénin",
+          city: "Cotonou",
+          domain: "gestock-bj.bj",
+          status: "active",
+          isDefault: false,
+          role: "Direction",
+          users: 38,
+          warehouses: 2
         }
       ],
       permissions: ["Pilotage", "Reporting", "Validation stratégique", "Audit lecture"]
