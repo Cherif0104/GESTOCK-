@@ -951,6 +951,28 @@ function LoginScreen({
             <FeatureCard icon="◇" title="Traçabilité complète" text="Suivez chaque article, lot et mouvement." />
             <FeatureCard icon="♢" title="Alertes intelligentes" text="Anticipez les ruptures et péremptions." />
           </div>
+
+          <div className="login-ops-preview" aria-label="Aperçu opérationnel GESTOCK">
+            <header>
+              <strong>Tour de contrôle stock</strong>
+              <span>Live mock</span>
+            </header>
+            <div>
+              <small>Disponibilité</small>
+              <b>92,4%</b>
+              <em>+4,2%</em>
+            </div>
+            <div>
+              <small>Réceptions du jour</small>
+              <b>18</b>
+              <em>7 validées</em>
+            </div>
+            <div>
+              <small>Alertes critiques</small>
+              <b>12</b>
+              <em>à traiter</em>
+            </div>
+          </div>
         </div>
 
         <small className="copyright">© 2024 GESTOCK. Tous droits réservés.</small>
@@ -1207,6 +1229,10 @@ function DashboardScreen({
   const isCatalogue = activeNav === "Catalogue";
   const [selectedArticle, setSelectedArticle] = useState<ArticleRecord | null>(null);
   const [selectedCatalogProduct, setSelectedCatalogProduct] = useState<CatalogProduct | null>(null);
+  const [openTopbarPanel, setOpenTopbarPanel] = useState<"notifications" | "messages" | "user" | null>(null);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const [readMessageIds, setReadMessageIds] = useState<string[]>([]);
+  const [topbarSearch, setTopbarSearch] = useState("");
   const searchPlaceholder =
     activeNav === "Articles"
       ? selectedArticle
@@ -1263,14 +1289,39 @@ function DashboardScreen({
           <button onClick={() => onAction("Menu latéral compact activé en mode mock.")} type="button">☰</button>
           <label>
             <span>⌕</span>
-            <input placeholder={searchPlaceholder} />
+            <input
+              onChange={(event) => setTopbarSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && topbarSearch.trim()) {
+                  onAction(`Recherche globale lancée : ${topbarSearch.trim()}`);
+                }
+              }}
+              placeholder={searchPlaceholder}
+              value={topbarSearch}
+            />
             <kbd>Ctrl + K</kbd>
           </label>
           <div className="topbar-actions">
-            <button onClick={() => onAction("Notifications : 12 alertes critiques à traiter.")} type="button">♧<em>12</em></button>
-            <button onClick={() => onAction("Messagerie : 5 messages fournisseurs.")} type="button">✉<em>5</em></button>
+            <button
+              className={openTopbarPanel === "notifications" ? "active" : ""}
+              onClick={() => setOpenTopbarPanel(openTopbarPanel === "notifications" ? null : "notifications")}
+              type="button"
+            >
+              ♧<em>{Math.max(0, 12 - readNotificationIds.length)}</em>
+            </button>
+            <button
+              className={openTopbarPanel === "messages" ? "active" : ""}
+              onClick={() => setOpenTopbarPanel(openTopbarPanel === "messages" ? null : "messages")}
+              type="button"
+            >
+              ✉<em>{Math.max(0, 5 - readMessageIds.length)}</em>
+            </button>
             <button onClick={() => onAction("Aide contextuelle du dashboard.")} type="button">?</button>
-            <button className="user-menu" onClick={onLogout} type="button">
+            <button
+              className={`user-menu ${openTopbarPanel === "user" ? "active" : ""}`}
+              onClick={() => setOpenTopbarPanel(openTopbarPanel === "user" ? null : "user")}
+              type="button"
+            >
               <span />
               <b>{user.name}</b>
               <small>{user.role}</small>
@@ -1278,6 +1329,25 @@ function DashboardScreen({
             </button>
           </div>
         </header>
+
+        {openTopbarPanel ? (
+          <TopbarPanel
+            onAction={onAction}
+            onClose={() => setOpenTopbarPanel(null)}
+            onLogout={onLogout}
+            onReadMessage={(id) =>
+              setReadMessageIds((current) => current.includes(id) ? current : [...current, id])
+            }
+            onReadNotification={(id) =>
+              setReadNotificationIds((current) => current.includes(id) ? current : [...current, id])
+            }
+            organization={organization}
+            panel={openTopbarPanel}
+            readMessageIds={readMessageIds}
+            readNotificationIds={readNotificationIds}
+            user={user}
+          />
+        ) : null}
 
         <div className="dashboard-page">
           {notice ? (
@@ -1331,6 +1401,128 @@ function DashboardScreen({
   );
 }
 
+function TopbarPanel({
+  onAction,
+  onClose,
+  onLogout,
+  onReadMessage,
+  onReadNotification,
+  organization,
+  panel,
+  readMessageIds,
+  readNotificationIds,
+  user
+}: {
+  onAction: (message: string | null) => void;
+  onClose: () => void;
+  onLogout: () => void;
+  onReadMessage: (id: string) => void;
+  onReadNotification: (id: string) => void;
+  organization: MockOrganizationAccess;
+  panel: "notifications" | "messages" | "user";
+  readMessageIds: string[];
+  readNotificationIds: string[];
+  user: MockUser;
+}) {
+  const notifications = [
+    { id: "rupture-riz", title: "Rupture critique", text: "Riz 25kg indisponible à Saint-Louis.", tone: "danger" },
+    { id: "stock-ciment", title: "Sous stock", text: "Ciment 50kg sous seuil à Kaolack.", tone: "warning" },
+    { id: "expiry-para", title: "Péremption proche", text: "Lot PARA-500-L24 à contrôler sous 18 jours.", tone: "info" },
+    { id: "receipt-delay", title: "Réception en retard", text: "Commande PO-0048 attend validation fournisseur.", tone: "warning" }
+  ];
+  const messages = [
+    { id: "msg-1", from: "BioPharma Sénégal", subject: "Confirmation livraison PARA-500", time: "08:12" },
+    { id: "msg-2", from: "Entrepôt Thiès", subject: "Demande de transfert gants L", time: "07:45" },
+    { id: "msg-3", from: "Direction Achats", subject: "Validation prix huile moteur", time: "Hier" },
+    { id: "msg-4", from: "Qualité réception", subject: "Certificat lot CIM-50KG", time: "Hier" },
+    { id: "msg-5", from: "Support GESTOCK", subject: "Session audit planifiée", time: "Lun." }
+  ];
+
+  return (
+    <aside className="topbar-panel">
+      <header>
+        <div>
+          <strong>
+            {panel === "notifications" ? "Centre de notifications" : panel === "messages" ? "Messages & mailing" : "Compte utilisateur"}
+          </strong>
+          <small>{organization.name}</small>
+        </div>
+        <button onClick={onClose} type="button">×</button>
+      </header>
+
+      {panel === "notifications" ? (
+        <div className="topbar-panel-list">
+          {notifications.map((notification) => {
+            const isRead = readNotificationIds.includes(notification.id);
+            return (
+              <button
+                className={`topbar-item ${notification.tone} ${isRead ? "read" : ""}`}
+                key={notification.id}
+                onClick={() => {
+                  onReadNotification(notification.id);
+                  onAction(`Notification ouverte : ${notification.title} - ${notification.text}`);
+                }}
+                type="button"
+              >
+                <span />
+                <b>{notification.title}</b>
+                <small>{notification.text}</small>
+                <em>{isRead ? "Lu" : "Nouveau"}</em>
+              </button>
+            );
+          })}
+          <button className="topbar-panel-primary" onClick={() => onAction("Centre complet des alertes ouvert.")} type="button">
+            Ouvrir toutes les alertes
+          </button>
+        </div>
+      ) : null}
+
+      {panel === "messages" ? (
+        <div className="topbar-panel-list">
+          {messages.map((message) => {
+            const isRead = readMessageIds.includes(message.id);
+            return (
+              <button
+                className={`topbar-message ${isRead ? "read" : ""}`}
+                key={message.id}
+                onClick={() => {
+                  onReadMessage(message.id);
+                  onAction(`Message ouvert : ${message.subject}`);
+                }}
+                type="button"
+              >
+                <span>{message.from.slice(0, 2).toUpperCase()}</span>
+                <b>{message.from}</b>
+                <small>{message.subject}</small>
+                <em>{message.time}</em>
+              </button>
+            );
+          })}
+          <div className="topbar-compose">
+            <input placeholder="Écrire à un fournisseur, site ou utilisateur..." />
+            <button onClick={() => onAction("Brouillon de message créé en mode mock.")} type="button">Composer</button>
+          </div>
+        </div>
+      ) : null}
+
+      {panel === "user" ? (
+        <div className="topbar-user-panel">
+          <div className="topbar-user-card">
+            <span />
+            <strong>{user.name}</strong>
+            <small>{user.email}</small>
+            <em>{user.role} · {organization.city}</em>
+          </div>
+          <button onClick={() => onAction("Profil utilisateur ouvert : informations, sécurité, préférences.")} type="button">Profil & préférences</button>
+          <button onClick={() => onAction("Gestion des sessions active : appareil courant, historique, MFA.")} type="button">Sécurité du compte</button>
+          <button onClick={() => onAction("Centre d'aide contextuel ouvert.")} type="button">Aide & support</button>
+          <button className="danger" onClick={onLogout} type="button">Se déconnecter</button>
+        </div>
+      ) : null}
+    </aside>
+  );
+}
+
 function formatCompactCurrency(value: number) {
   if (value >= 1_000_000_000) {
     return `${(value / 1_000_000_000).toFixed(2).replace(".", ",")} Md`;
@@ -1351,6 +1543,32 @@ function percentChange(current: number, previous: number) {
 function formatSignedPercent(value: number) {
   const sign = value >= 0 ? "+" : "";
   return `${sign}${value.toFixed(1).replace(".", ",")}%`;
+}
+
+function parseNumericValue(value: string) {
+  return Number(value.replace(/\s/g, "").replace(",", ".")) || 0;
+}
+
+function productVisualClass(name: string) {
+  const normalized = name.toLowerCase();
+
+  if (normalized.includes("paracétamol") || normalized.includes("masque") || normalized.includes("gant")) {
+    return "product-visual-medical";
+  }
+
+  if (normalized.includes("huile") || normalized.includes("ampoule")) {
+    return "product-visual-industrial";
+  }
+
+  if (normalized.includes("ciment") || normalized.includes("fer")) {
+    return "product-visual-material";
+  }
+
+  if (normalized.includes("riz") || normalized.includes("eau")) {
+    return "product-visual-food";
+  }
+
+  return "product-visual-office";
 }
 
 function DashboardContent({
@@ -1626,6 +1844,61 @@ function ArticlesModule({
   onBack: () => void;
   onOpenArticle: (article: ArticleRecord) => void;
 }) {
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ArticleStatus | "Tous">("Tous");
+  const [categoryFilter, setCategoryFilter] = useState("Toutes");
+  const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [actionPanel, setActionPanel] = useState<"create" | "import" | "scan" | "columns" | null>(null);
+  const [draftArticles, setDraftArticles] = useState<ArticleRecord[]>([]);
+  const articles = [...draftArticles, ...articleItems];
+  const categories = ["Toutes", ...Array.from(new Set(articles.map((item) => item.category)))];
+  const filteredArticles = articles.filter((item) => {
+    const matchesQuery = [item.reference, item.designation, item.barcode, item.category, item.location]
+      .join(" ")
+      .toLowerCase()
+      .includes(query.trim().toLowerCase());
+    const matchesStatus = statusFilter === "Tous" || item.status === statusFilter;
+    const matchesCategory = categoryFilter === "Toutes" || item.category === categoryFilter;
+
+    return matchesQuery && matchesStatus && matchesCategory;
+  });
+  const selectedArticles = articles.filter((item) => selectedReferences.includes(item.reference));
+  const stockValue = filteredArticles.reduce(
+    (total, item) => total + parseNumericValue(item.averagePrice) * parseNumericValue(item.stock),
+    0
+  );
+  const articleKpis: Array<[string, string, string, string, ArticleStatus | "Tous"]> = [
+    [String(articles.length), "Articles actifs", "◇", "green", "Tous"],
+    [String(articles.filter((item) => item.status === "Sous stock").length), "Sous stock", "△", "orange", "Sous stock"],
+    [String(articles.filter((item) => item.status === "Rupture").length), "Rupture de stock", "△", "red", "Rupture"],
+    ["3", "Prochains à péremption", "□", "purple", "Tous"],
+    [`${Math.round((articles.filter((item) => item.status === "Actif").length / articles.length) * 100)}%`, "Couverture active", "♢", "green", "Actif"]
+  ];
+
+  const toggleReference = (reference: string) => {
+    setSelectedReferences((current) =>
+      current.includes(reference)
+        ? current.filter((item) => item !== reference)
+        : [...current, reference]
+    );
+  };
+
+  const toggleAllVisible = () => {
+    const visibleReferences = filteredArticles.map((item) => item.reference);
+    const allVisibleSelected = visibleReferences.every((reference) => selectedReferences.includes(reference));
+    setSelectedReferences((current) =>
+      allVisibleSelected
+        ? current.filter((reference) => !visibleReferences.includes(reference))
+        : Array.from(new Set([...current, ...visibleReferences]))
+    );
+  };
+
+  const cycleCategory = () => {
+    const currentIndex = categories.indexOf(categoryFilter);
+    setCategoryFilter(categories[(currentIndex + 1) % categories.length]);
+  };
+
   if (article) {
     return (
       <ArticleDetail
@@ -1641,97 +1914,178 @@ function ArticlesModule({
       <header className="articles-header">
         <div>
           <h1>Articles</h1>
-          <p>Gérez l'ensemble de vos articles et produits.</p>
+          <p>Gérez l'ensemble de vos articles et produits avec données, filtres et actions opérationnelles.</p>
         </div>
         <div>
-          <button onClick={() => onAction("Import d'articles ouvert : CSV, Excel et modèles de colonnes prêts en mock.")} type="button">
+          <button onClick={() => setActionPanel(actionPanel === "import" ? null : "import")} type="button">
             ⇩ Importer des articles
           </button>
-          <button className="primary" onClick={() => onAction("Formulaire Nouvel article préparé : informations, codes-barres, stock initial et documents.")} type="button">
+          <button className="primary" onClick={() => setActionPanel(actionPanel === "create" ? null : "create")} type="button">
             + Nouvel article
           </button>
         </div>
       </header>
 
       <section className="article-kpis">
-        {[
-          ["2 356", "Articles actifs", "◇", "green"],
-          ["156", "Sous stock", "△", "orange"],
-          ["28", "Rupture de stock", "△", "red"],
-          ["142", "Prochains à péremption", "□", "purple"],
-          ["98,6%", "Couverture moyenne", "♢", "green"]
-        ].map(([value, label, icon, tone]) => (
-          <article key={label}>
+        {articleKpis.map(([value, label, icon, tone, nextStatus]) => (
+          <button
+            className={statusFilter === nextStatus ? "active" : ""}
+            key={label}
+            onClick={() => setStatusFilter(nextStatus)}
+            type="button"
+          >
             <strong>{value}</strong>
             <small>{label}</small>
             <span className={tone}>{icon}</span>
-          </article>
+          </button>
         ))}
       </section>
+
+      <section className="article-live-summary">
+        <div>
+          <small>Résultat actif</small>
+          <strong>{filteredArticles.length} article(s)</strong>
+          <span>{statusFilter} · {categoryFilter}</span>
+        </div>
+        <div>
+          <small>Valorisation filtrée</small>
+          <strong>{formatCompactCurrency(stockValue)} FCFA</strong>
+          <span>Prix moyen x stock disponible</span>
+        </div>
+        <div>
+          <small>Sélection</small>
+          <strong>{selectedReferences.length} ligne(s)</strong>
+          <span>{selectedArticles.map((item) => item.reference).slice(0, 2).join(", ") || "Aucune sélection"}</span>
+        </div>
+        <div className="article-bulk-actions">
+          <button disabled={selectedReferences.length === 0} onClick={() => onAction(`${selectedReferences.length} article(s) envoyés en impression étiquettes.`)} type="button">
+            Imprimer sélection
+          </button>
+          <button disabled={selectedReferences.length === 0} onClick={() => onAction(`${selectedReferences.length} article(s) préparés pour export Excel.`)} type="button">
+            Exporter
+          </button>
+        </div>
+      </section>
+
+      {actionPanel ? (
+        <ArticleActionPanel
+          articles={articles}
+          mode={actionPanel}
+          onAction={onAction}
+          onClose={() => setActionPanel(null)}
+          onCreateArticle={(nextArticle) => {
+            setDraftArticles((current) => [nextArticle, ...current]);
+            setActionPanel(null);
+            onAction(`Article ${nextArticle.reference} créé en mode mock et ajouté à la liste.`);
+          }}
+          onImportArticles={(nextArticles) => {
+            setDraftArticles((current) => [...nextArticles, ...current]);
+            setActionPanel(null);
+            onAction(`${nextArticles.length} articles importés en mode mock après mapping des colonnes.`);
+          }}
+          onOpenArticle={onOpenArticle}
+        />
+      ) : null}
 
       <section className="article-list-card">
         <div className="article-filters">
           <label>
             <span>⌕</span>
-            <input placeholder="Rechercher un article..." />
+            <input
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Rechercher un article, une référence, un code-barres..."
+              value={query}
+            />
           </label>
-          {["Catégorie", "Famille", "Statut", "Entrepôt", "Plus de filtres"].map((filter) => (
-            <button key={filter} onClick={() => onAction(`Filtre ${filter} activé en mode mock.`)} type="button">
-              {filter} ⌄
-            </button>
-          ))}
-          <button onClick={() => onAction("Filtres réinitialisés.")} type="button">↻ Réinitialiser</button>
+          <button onClick={cycleCategory} type="button">Catégorie : {categoryFilter} ⌄</button>
+          <button onClick={() => setStatusFilter(statusFilter === "Tous" ? "Actif" : statusFilter === "Actif" ? "Sous stock" : statusFilter === "Sous stock" ? "Rupture" : "Tous")} type="button">
+            Statut : {statusFilter} ⌄
+          </button>
+          <button onClick={() => setActionPanel(actionPanel === "scan" ? null : "scan")} type="button">▥ Scanner</button>
+          <button onClick={() => {
+            setQuery("");
+            setStatusFilter("Tous");
+            setCategoryFilter("Toutes");
+            setSelectedReferences([]);
+          }} type="button">↻ Réinitialiser</button>
           <div>
-            <button className="active" onClick={() => onAction("Vue grille Articles activée en mode mock.")} type="button">▦</button>
-            <button onClick={() => onAction("Vue liste Articles activée en mode mock.")} type="button">☷</button>
-            <button onClick={() => onAction("Paramètres de colonnes ouverts.")} type="button">⚙</button>
+            <button className={viewMode === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} type="button">▦</button>
+            <button className={viewMode === "table" ? "active" : ""} onClick={() => setViewMode("table")} type="button">☷</button>
+            <button className={actionPanel === "columns" ? "active" : ""} onClick={() => setActionPanel(actionPanel === "columns" ? null : "columns")} type="button">⚙</button>
           </div>
         </div>
 
-        <table className="articles-table">
-          <thead>
-            <tr>
-              <th><input aria-label="Sélectionner tous les articles" onChange={() => onAction("Sélection de tous les articles activée en mode mock.")} type="checkbox" /></th>
-              <th>Référence ↕</th>
-              <th>Désignation</th>
-              <th>Catégorie</th>
-              <th>Unité</th>
-              <th>Prix moyen (FCFA)</th>
-              <th>Stock disponible</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {articleItems.map((item) => (
-              <tr key={item.reference}>
-                <td><input aria-label={`Sélectionner ${item.reference}`} onChange={() => onAction(`${item.reference} sélectionné en mode mock.`)} type="checkbox" /></td>
-                <td>
-                  <button className="article-reference" onClick={() => onOpenArticle(item)} type="button">
-                    <span>{item.icon}</span>
-                    <b>{item.reference}</b>
-                  </button>
-                </td>
-                <td>{item.designation}</td>
-                <td>{item.category}</td>
-                <td>{item.unit}</td>
-                <td>{item.averagePrice}</td>
-                <td>{item.stock}</td>
-                <td><em className={`status-pill ${statusClass(item.status)}`}>{item.status}</em></td>
-                <td>
-                  <div className="row-actions">
-                    <button aria-label="Voir" onClick={() => onOpenArticle(item)} type="button">⊙</button>
-                    <button aria-label="Modifier" onClick={() => onAction(`Édition de ${item.reference} ouverte en mock.`)} type="button">✎</button>
-                    <button aria-label="Plus" onClick={() => onAction(`Menu actions de ${item.reference} : dupliquer, archiver, QR, lots.`)} type="button">…</button>
-                  </div>
-                </td>
+        {viewMode === "table" ? (
+          <table className="articles-table">
+            <thead>
+              <tr>
+                <th><input aria-label="Sélectionner tous les articles visibles" checked={filteredArticles.length > 0 && filteredArticles.every((item) => selectedReferences.includes(item.reference))} onChange={toggleAllVisible} type="checkbox" /></th>
+                <th>Référence ↕</th>
+                <th>Désignation</th>
+                <th>Catégorie</th>
+                <th>Unité</th>
+                <th>Prix moyen (FCFA)</th>
+                <th>Stock disponible</th>
+                <th>Statut</th>
+                <th>Actions</th>
               </tr>
+            </thead>
+            <tbody>
+              {filteredArticles.map((item) => (
+                <tr className={selectedReferences.includes(item.reference) ? "selected" : ""} key={item.reference}>
+                  <td><input aria-label={`Sélectionner ${item.reference}`} checked={selectedReferences.includes(item.reference)} onChange={() => toggleReference(item.reference)} type="checkbox" /></td>
+                  <td>
+                    <button className="article-reference" onClick={() => onOpenArticle(item)} type="button">
+                      <span>{item.icon}</span>
+                      <b>{item.reference}</b>
+                    </button>
+                  </td>
+                  <td>
+                    <div className="article-product-cell">
+                      <ProductVisual label={item.icon} name={item.designation} />
+                      <span>{item.designation}<small>{item.barcode}</small></span>
+                    </div>
+                  </td>
+                  <td>{item.category}</td>
+                  <td>{item.unit}</td>
+                  <td>{item.averagePrice}</td>
+                  <td>{item.stock}</td>
+                  <td><em className={`status-pill ${statusClass(item.status)}`}>{item.status}</em></td>
+                  <td>
+                    <div className="row-actions">
+                      <button aria-label="Voir" onClick={() => onOpenArticle(item)} type="button">⊙</button>
+                      <button aria-label="Modifier" onClick={() => setActionPanel("create")} type="button">✎</button>
+                      <button aria-label="Plus" onClick={() => onAction(`Menu actions de ${item.reference} : dupliquer, archiver, QR, lots.`)} type="button">…</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="article-grid-view">
+            {filteredArticles.map((item) => (
+              <article className={selectedReferences.includes(item.reference) ? "selected" : ""} key={item.reference}>
+                <ProductVisual label={item.icon} name={item.designation} />
+                <div>
+                  <em className={`status-pill ${statusClass(item.status)}`}>{item.status}</em>
+                  <h3>{item.designation}</h3>
+                  <p>{item.reference} · {item.location}</p>
+                  <strong>{item.stock} {item.unit}(s)</strong>
+                </div>
+                <footer>
+                  <button onClick={() => toggleReference(item.reference)} type="button">
+                    {selectedReferences.includes(item.reference) ? "Retirer" : "Sélectionner"}
+                  </button>
+                  <button onClick={() => onOpenArticle(item)} type="button">Ouvrir</button>
+                </footer>
+              </article>
             ))}
-          </tbody>
-        </table>
+          </div>
+        )}
 
         <footer className="article-pagination">
-          <span>Affichage de 1 à 10 sur 2.356 articles</span>
+          <span>Affichage de 1 à {filteredArticles.length} sur {articles.length} articles mockés</span>
           <div>
             <button type="button">«</button>
             <button type="button">‹</button>
@@ -1746,6 +2100,180 @@ function ArticlesModule({
           <button type="button">10 / page ⌄</button>
         </footer>
       </section>
+    </section>
+  );
+}
+
+function ArticleActionPanel({
+  articles,
+  mode,
+  onAction,
+  onClose,
+  onCreateArticle,
+  onImportArticles,
+  onOpenArticle
+}: {
+  articles: ArticleRecord[];
+  mode: "create" | "import" | "scan" | "columns";
+  onAction: (message: string | null) => void;
+  onClose: () => void;
+  onCreateArticle: (article: ArticleRecord) => void;
+  onImportArticles: (articles: ArticleRecord[]) => void;
+  onOpenArticle: (article: ArticleRecord) => void;
+}) {
+  const [scanValue, setScanValue] = useState("6161101234567");
+  const scannedArticle = articles.find((item) => item.barcode === scanValue.trim());
+  const importPreview: ArticleRecord[] = [
+    {
+      reference: "THERMO-IR",
+      designation: "Thermomètre infrarouge",
+      category: "Médicaments",
+      family: "Dispositifs médicaux",
+      unit: "Pièce",
+      averagePrice: "18 500",
+      stock: "64",
+      status: "Actif",
+      barcode: "6161111234567",
+      location: "Dakar / MED-09",
+      icon: "IR"
+    },
+    {
+      reference: "BUREAU-140",
+      designation: "Bureau administratif 140cm",
+      category: "Mobilier",
+      family: "Bureau",
+      unit: "Pièce",
+      averagePrice: "85 000",
+      stock: "12",
+      status: "Sous stock",
+      barcode: "6161112234567",
+      location: "Abidjan / MOB-02",
+      icon: "DESK"
+    }
+  ];
+
+  return (
+    <section className="article-action-panel">
+      <header>
+        <div>
+          <strong>
+            {mode === "create" ? "Créer / modifier un article" : mode === "import" ? "Import Articles CSV / Excel" : mode === "scan" ? "Scanner code-barres / QR" : "Colonnes & affichage"}
+          </strong>
+          <small>Workflow mock fonctionnel, prêt à connecter à l'API.</small>
+        </div>
+        <button onClick={onClose} type="button">×</button>
+      </header>
+
+      {mode === "create" ? (
+        <form
+          className="article-form-grid"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const reference = String(form.get("reference") || "").trim().toUpperCase();
+            const designation = String(form.get("designation") || "").trim();
+            const category = String(form.get("category") || "Consommables");
+
+            if (!reference || !designation) {
+              onAction("Création impossible : référence et désignation sont obligatoires.");
+              return;
+            }
+
+            onCreateArticle({
+              reference,
+              designation,
+              category,
+              family: String(form.get("family") || "Famille mock"),
+              unit: String(form.get("unit") || "Pièce"),
+              averagePrice: String(form.get("averagePrice") || "0"),
+              stock: String(form.get("stock") || "0"),
+              status: "Actif",
+              barcode: String(form.get("barcode") || `616${Date.now().toString().slice(-10)}`),
+              location: String(form.get("location") || "Dakar / NEW-01"),
+              icon: reference.slice(0, 4)
+            });
+          }}
+        >
+          <label><span>Référence *</span><input name="reference" placeholder="ex. GEL-HYDRO-500" /></label>
+          <label><span>Désignation *</span><input name="designation" placeholder="Gel hydroalcoolique 500ml" /></label>
+          <label><span>Catégorie</span><input name="category" defaultValue="Consommables" /></label>
+          <label><span>Famille</span><input name="family" defaultValue="Hygiène" /></label>
+          <label><span>Unité</span><input name="unit" defaultValue="Flacon" /></label>
+          <label><span>Prix moyen</span><input name="averagePrice" defaultValue="1 750" /></label>
+          <label><span>Stock initial</span><input name="stock" defaultValue="240" /></label>
+          <label><span>Code-barres</span><input name="barcode" defaultValue="6161113234567" /></label>
+          <label className="wide"><span>Emplacement</span><input name="location" defaultValue="Dakar / HYG-01" /></label>
+          <div className="article-toggle-row">
+            <label><input defaultChecked type="checkbox" /> Article stockable</label>
+            <label><input defaultChecked type="checkbox" /> Suivi code-barres</label>
+            <label><input type="checkbox" /> Gestion par lot</label>
+          </div>
+          <footer>
+            <button onClick={onClose} type="button">Annuler</button>
+            <button className="primary" type="submit">Sauvegarder l'article</button>
+          </footer>
+        </form>
+      ) : null}
+
+      {mode === "import" ? (
+        <div className="article-import-panel">
+          <div className="upload-zone">
+            <strong>Déposer un fichier CSV / Excel</strong>
+            <small>Simulation : le fichier est validé, mappé puis prévisualisé.</small>
+            <button onClick={() => onAction("Fichier articles_mock.xlsx chargé en mémoire mock.")} type="button">Choisir un fichier</button>
+          </div>
+          <ArticleMiniTable
+            columns={["Colonne fichier", "Champ GESTOCK", "Statut"]}
+            rows={[
+              ["SKU", "Référence", "OK"],
+              ["Product name", "Désignation", "OK"],
+              ["Warehouse", "Emplacement", "À confirmer"]
+            ]}
+          />
+          <footer>
+            <button onClick={() => onAction("Erreurs d'import prévisualisées : 1 emplacement à confirmer.")} type="button">Voir erreurs</button>
+            <button className="primary" onClick={() => onImportArticles(importPreview)} type="button">Importer 2 lignes propres</button>
+          </footer>
+        </div>
+      ) : null}
+
+      {mode === "scan" ? (
+        <div className="article-scan-panel">
+          <label>
+            <span>Code EAN13 / QR / DataMatrix</span>
+            <input onChange={(event) => setScanValue(event.target.value)} value={scanValue} />
+          </label>
+          <div className="scanner-frame">
+            <span />
+            <b>{scanValue || "Scanner..."}</b>
+          </div>
+          {scannedArticle ? (
+            <article>
+              <ProductVisual label={scannedArticle.icon} name={scannedArticle.designation} />
+              <div>
+                <strong>{scannedArticle.designation}</strong>
+                <small>{scannedArticle.reference} · {scannedArticle.location}</small>
+                <em className={`status-pill ${statusClass(scannedArticle.status)}`}>{scannedArticle.status}</em>
+              </div>
+              <button onClick={() => onOpenArticle(scannedArticle)} type="button">Ouvrir la fiche</button>
+            </article>
+          ) : (
+            <p>Aucun article trouvé pour ce code. Vous pouvez créer une nouvelle fiche depuis ce scan.</p>
+          )}
+        </div>
+      ) : null}
+
+      {mode === "columns" ? (
+        <div className="article-columns-panel">
+          {["Photo", "Référence", "Désignation", "Catégorie", "Prix moyen", "Stock", "Statut", "Actions"].map((column) => (
+            <label key={column}>
+              <input defaultChecked type="checkbox" />
+              <span>{column}</span>
+            </label>
+          ))}
+          <button onClick={() => onAction("Préférence de colonnes sauvegardée pour cet utilisateur.")} type="button">Sauvegarder l'affichage</button>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -2557,10 +3085,10 @@ function SideCard({ title, rows }: { title: string; rows: string[][] }) {
 
 function ProductVisual({ label, name = "Produit" }: { label: string; name?: string }) {
   return (
-    <div className="product-visual">
+    <div className={`product-visual ${productVisualClass(name)}`}>
       <span>{label}</span>
       <b>{name}</b>
-      <small>500mg</small>
+      <small>Photo article</small>
     </div>
   );
 }
