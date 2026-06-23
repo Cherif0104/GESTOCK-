@@ -2953,6 +2953,289 @@ input {
   font-size: 0.58rem;
 }
 
+.module-workbench {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.module-workbench-header,
+.module-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.module-workbench-header h2,
+.module-workbench-header p {
+  margin: 0;
+}
+
+.module-workbench-header h2 {
+  color: #071942;
+  font-size: 1.25rem;
+  letter-spacing: -0.035em;
+}
+
+.module-workbench-header p {
+  margin-top: 0.24rem;
+  color: #52617c;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.module-workbench-header > div:last-child {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.module-workbench button,
+.module-subnav button,
+.module-table-toolbar button {
+  border: 1px solid #dce4ef;
+  border-radius: 0.34rem;
+  background: #ffffff;
+  color: #0b55d9;
+  cursor: pointer;
+  font-size: 0.6rem;
+  font-weight: 850;
+}
+
+.module-workbench-header button {
+  min-height: 1.95rem;
+  padding: 0 0.8rem;
+}
+
+.module-workbench-header button.primary {
+  border-color: #0b65ff;
+  background: #0b65ff;
+  color: #ffffff;
+}
+
+.module-subnav {
+  display: flex;
+  gap: 0.42rem;
+  overflow-x: auto;
+  padding: 0.1rem 0 0.2rem;
+}
+
+.module-subnav button {
+  min-height: 1.86rem;
+  flex: 0 0 auto;
+  padding: 0 0.68rem;
+  color: #31456f;
+}
+
+.module-subnav button.active {
+  border-color: #0b65ff;
+  background: #eef5ff;
+  color: #0b65ff;
+}
+
+.module-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.module-kpi-grid article,
+.module-table-card,
+.module-side-card {
+  border: 1px solid #dfe6f1;
+  border-radius: 0.45rem;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.module-kpi-grid article {
+  position: relative;
+  min-height: 3.6rem;
+  padding: 0.78rem 0.95rem;
+}
+
+.module-kpi-grid strong,
+.module-kpi-grid small {
+  display: block;
+}
+
+.module-kpi-grid strong {
+  color: #071942;
+  font-size: 1.02rem;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.module-kpi-grid small {
+  margin-top: 0.18rem;
+  color: #52617c;
+  font-size: 0.57rem;
+  font-weight: 760;
+}
+
+.module-kpi-grid span {
+  position: absolute;
+  right: 0.95rem;
+  top: 50%;
+  font-size: 1.25rem;
+  transform: translateY(-50%);
+}
+
+.module-kpi-grid span.blue {
+  color: #0b65ff;
+}
+
+.module-kpi-grid span.green {
+  color: #17a957;
+}
+
+.module-kpi-grid span.orange,
+.module-kpi-grid span.purple {
+  color: #a855f7;
+}
+
+.module-kpi-grid span.red {
+  color: #ef4444;
+}
+
+.module-workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 19.5rem;
+  gap: 0.72rem;
+}
+
+.module-table-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.module-table-toolbar {
+  padding: 0.78rem 0.85rem;
+  border-bottom: 1px solid #e5ebf4;
+  justify-content: flex-start;
+}
+
+.module-table-toolbar label {
+  display: flex;
+  min-width: 15rem;
+  min-height: 1.85rem;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 0.62rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.34rem;
+  color: #7a869d;
+}
+
+.module-table-toolbar input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #071942;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.module-table-toolbar button {
+  min-height: 1.85rem;
+  padding: 0 0.62rem;
+  color: #071942;
+}
+
+.module-table-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.module-table-card th,
+.module-table-card td {
+  padding: 0.56rem 0.72rem;
+  border-bottom: 1px solid #edf1f6;
+  color: #071942;
+  font-size: 0.56rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.module-table-card th {
+  font-weight: 950;
+}
+
+.module-table-card td {
+  color: #233557;
+  font-weight: 760;
+}
+
+.module-side-card {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 0.82rem;
+}
+
+.module-side-card > strong {
+  color: #071942;
+  font-size: 0.6rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.module-side-card > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.2rem;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid #edf1f6;
+  border-radius: 0;
+  color: #31456f;
+  text-align: left;
+}
+
+.module-side-card span {
+  font-size: 0.62rem;
+}
+
+.module-side-card b {
+  color: #0b65ff;
+  font-size: 0.65rem;
+}
+
+.module-security-note {
+  margin-top: 0.4rem;
+  padding: 0.7rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.38rem;
+  background: #f8fbff;
+}
+
+.module-security-note small,
+.module-security-note strong,
+.module-security-note p {
+  display: block;
+  margin: 0;
+}
+
+.module-security-note small {
+  color: #64748b;
+  font-size: 0.55rem;
+  font-weight: 850;
+}
+
+.module-security-note strong {
+  margin-top: 0.22rem;
+  color: #071942;
+  font-size: 0.68rem;
+}
+
+.module-security-note p {
+  margin-top: 0.4rem;
+  color: #52617c;
+  font-size: 0.58rem;
+  line-height: 1.45;
+}
+
 .module-placeholder {
   display: grid;
   place-items: center;
@@ -3084,7 +3367,8 @@ input {
 
   .kpi-grid,
   .indicator-strip,
-  .article-kpis {
+  .article-kpis,
+  .module-kpi-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -3096,12 +3380,14 @@ input {
   .article-info-columns,
   .catalogue-grid,
   .catalogue-detail-grid,
-  .catalogue-detail-content {
+  .catalogue-detail-content,
+  .module-workbench-grid {
     grid-template-columns: 1fr;
   }
 
   .article-side-panel,
-  .catalogue-side {
+  .catalogue-side,
+  .module-side-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -3144,6 +3430,7 @@ input {
   .indicator-strip,
   .article-kpis,
   .catalogue-kpis,
+  .module-kpi-grid,
   .catalogue-side,
   .article-side-panel {
     grid-template-columns: 1fr;
@@ -3151,6 +3438,8 @@ input {
 
   .articles-header,
   .catalogue-header,
+  .module-workbench-header,
+  .module-table-toolbar,
   .catalogue-detail-header,
   .article-detail-header,
   .catalogue-filters,
@@ -3161,12 +3450,14 @@ input {
   }
 
   .article-filters label,
-  .catalogue-filters label {
+  .catalogue-filters label,
+  .module-table-toolbar label {
     width: 100%;
   }
 
   .articles-table,
-  .catalogue-table {
+  .catalogue-table,
+  .module-table-card table {
     display: block;
     overflow-x: auto;
   }
