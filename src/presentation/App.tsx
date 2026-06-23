@@ -1605,6 +1605,19 @@ function ArticleDetail({
   onAction: (message: string | null) => void;
   onBack: () => void;
 }) {
+  const articleTabs = [
+    "Général",
+    "Logistique",
+    "Stock",
+    "Identification",
+    "Fournisseurs",
+    "Financier",
+    "Lots & Séries",
+    "Documents",
+    "Historique"
+  ];
+  const [activeTab, setActiveTab] = useState(articleTabs[0]);
+
   return (
     <section className="article-detail-page">
       <div className="article-breadcrumb">
@@ -1658,71 +1671,19 @@ function ArticleDetail({
       <div className="article-detail-grid">
         <article className="article-tabs-card">
           <nav className="article-tabs">
-            {["Informations générales", "Stocks & Emplacements", "Lots & Séries", "Tarification", "Fournisseurs", "Documents", "Historique"].map((tab, index) => (
-              <button className={index === 0 ? "active" : ""} key={tab} onClick={() => onAction(`Onglet ${tab} prêt à être détaillé.`)} type="button">
+            {articleTabs.map((tab) => (
+              <button
+                className={tab === activeTab ? "active" : ""}
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                type="button"
+              >
                 {tab}
               </button>
             ))}
           </nav>
 
-          <div className="article-info-columns">
-            <section>
-              <h2>Informations générales</h2>
-              <InfoRows
-                rows={[
-                  ["Référence interne", article.reference],
-                  ["Désignation", article.designation],
-                  ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
-                  ["Catégorie", "Médicaments > Analgiques"],
-                  ["Famille", article.family],
-                  ["Marque", "BIOPHARMA"],
-                  ["Laboratoire", "BIOPHARMA"],
-                  ["Unité de base", "Boîte"],
-                  ["Contenu de l'unité", "20 comprimés"],
-                  ["Unité de vente", "Boîte (20)"],
-                  ["Unité d'achat", "Carton (50 boîtes)"],
-                  ["Poids net", "0,050 kg"],
-                  ["Volume", "0,00012 m³"],
-                  ["Conditionnement", "Boîte en carton"],
-                  ["Durée de vie (mois)", "36"],
-                  ["Température de conservation", "Ambiante"],
-                  ["Code douanier", "30049000"],
-                  ["Pays d'origine", "France"]
-                ]}
-              />
-            </section>
-
-            <section>
-              <h2>Codes & Identifiants</h2>
-              <InfoRows
-                rows={[
-                  ["Code-barres (EAN13)", article.barcode],
-                  ["Code-barres (EAN14)", "6161101234564"],
-                  ["Code interne", "ART-2024-001256"],
-                  ["Référence fabricant", "PARA500-BIO"],
-                  ["SKU", "PARA500-BOX20"]
-                ]}
-              />
-              <h2>Images</h2>
-              <div className="article-images">
-                <ProductVisual label="PARA" name="Paracétamol" />
-                <ProductVisual label="TAB" name="Blister" />
-                <ProductVisual label="BOX" name="Boîte" />
-                <button onClick={() => onAction("Ajout d'image produit ouvert.")} type="button">＋</button>
-              </div>
-              <h2>Documents associés</h2>
-              <div className="document-list">
-                {["Fiche technique.pdf", "Certificat d'analyse.pdf", "Notice utilisation.pdf", "Autorisation mise sur marché.pdf"].map((document, index) => (
-                  <button key={document} onClick={() => onAction(`${document} prêt pour téléchargement mock.`)} type="button">
-                    <span>▣ {document}</span>
-                    <small>{[245, 320, 512, 780][index]} KB</small>
-                    <small>12/01/2024</small>
-                    <b>⇩</b>
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
+          <ArticleTabContent activeTab={activeTab} article={article} onAction={onAction} />
         </article>
 
         <aside className="article-side-panel">
@@ -1791,6 +1752,279 @@ function ArticleDetail({
         <span>Dernière modification le 31/05/2024 à 14:32 par Fatou NDIAYE</span>
       </footer>
     </section>
+  );
+}
+
+function ArticleTabContent({
+  activeTab,
+  article,
+  onAction
+}: {
+  activeTab: string;
+  article: ArticleRecord;
+  onAction: (message: string | null) => void;
+}) {
+  if (activeTab === "Général") {
+    return (
+      <div className="article-info-columns">
+        <section>
+          <h2>Informations générales</h2>
+          <InfoRows
+            rows={[
+              ["Référence interne", article.reference],
+              ["Désignation", article.designation],
+              ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
+              ["Catégorie", "Médicaments > Analgiques"],
+              ["Famille", article.family],
+              ["Marque", "BIOPHARMA"],
+              ["Laboratoire", "BIOPHARMA"],
+              ["Statut", article.status],
+              ["Image principale", "packaging-para-500.png"]
+            ]}
+          />
+        </section>
+        <section>
+          <h2>Images</h2>
+          <div className="article-images">
+            <ProductVisual label="PARA" name="Paracétamol" />
+            <ProductVisual label="TAB" name="Blister" />
+            <ProductVisual label="BOX" name="Boîte" />
+            <button onClick={() => onAction("Ajout d'image produit ouvert.")} type="button">＋</button>
+          </div>
+          <h2>Qualité fiche</h2>
+          <div className="article-mini-metrics">
+            {[
+              ["Complétude", "96%"],
+              ["Documents", "4"],
+              ["Dernière revue", "31/05/2024"]
+            ].map(([label, value]) => (
+              <span key={label}><small>{label}</small><b>{value}</b></span>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Logistique") {
+    return (
+      <div className="article-info-columns">
+        <section>
+          <h2>Conditionnement & dimensions</h2>
+          <InfoRows
+            rows={[
+              ["Unité de base", "Boîte"],
+              ["Contenu de l'unité", "20 comprimés"],
+              ["Unité de vente", "Boîte (20)"],
+              ["Unité d'achat", "Carton (50 boîtes)"],
+              ["Poids net", "0,050 kg"],
+              ["Poids brut", "0,062 kg"],
+              ["Volume", "0,00012 m³"],
+              ["Dimensions", "12 x 8 x 3 cm"]
+            ]}
+          />
+        </section>
+        <section>
+          <h2>Palettes, conservation & transport</h2>
+          <InfoRows
+            rows={[
+              ["Conditionnement", "Boîte en carton"],
+              ["Cartons par palette", "80"],
+              ["Boîtes par palette", "4 000"],
+              ["Température conservation", "Ambiante"],
+              ["Plage température", "15°C - 30°C"],
+              ["Transport", "Sec / non dangereux"],
+              ["Fragilité", "Standard"],
+              ["Durée de vie", "36 mois"]
+            ]}
+          />
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Stock") {
+    return (
+      <div className="article-tab-stack">
+        <section className="article-mini-metrics">
+          {[
+            ["Stock min", "500 boîtes"],
+            ["Stock max", "4 500 boîtes"],
+            ["Point commande", "850 boîtes"],
+            ["Réapprovisionnement", "Automatique"]
+          ].map(([label, value]) => (
+            <span key={label}><small>{label}</small><b>{value}</b></span>
+          ))}
+        </section>
+        <ArticleMiniTable
+          columns={["Entrepôt", "Emplacement", "Disponible", "Réservé", "Bloqué", "Statut"]}
+          rows={[
+            ["Dakar", "A-12", "2 500", "350", "120", "Actif"],
+            ["Thiès", "B-04", "1 000", "80", "0", "Actif"],
+            ["Kaolack", "C-03", "300", "0", "0", "Sous stock"]
+          ]}
+        />
+      </div>
+    );
+  }
+
+  if (activeTab === "Identification") {
+    return (
+      <div className="article-info-columns">
+        <section>
+          <h2>Codes & identifiants</h2>
+          <InfoRows
+            rows={[
+              ["Code-barres (EAN13)", article.barcode],
+              ["Code-barres (EAN14)", "6161101234564"],
+              ["DataMatrix", "01061611012345671724081510LOT240501"],
+              ["QR Code", "GESTOCK://item/PARA-500"],
+              ["SKU", "PARA500-BOX20"],
+              ["Code interne", "ART-2024-001256"],
+              ["Référence fabricant", "PARA500-BIO"]
+            ]}
+          />
+        </section>
+        <section>
+          <h2>Impression & scan</h2>
+          <div className="article-action-grid">
+            {["Imprimer étiquette", "Imprimer POS", "Générer QR Code", "Générer DataMatrix", "Tester scan EAN13", "Associer nouveau code"].map((action) => (
+              <button key={action} onClick={() => onAction(`${action} : prêt en mode mock.`)} type="button">{action}</button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Fournisseurs") {
+    return (
+      <div className="article-tab-stack">
+        <ArticleMiniTable
+          columns={["Fournisseur", "Référence", "Prix achat", "Délai", "Performance", "Statut"]}
+          rows={[
+            ["PHARMA CI", "PARA500-BIO", "850 FCFA", "5 jours", "97%", "Principal"],
+            ["MedEquip", "ME-PARA-500", "890 FCFA", "7 jours", "91%", "Alternatif"],
+            ["Dakar Pharma", "DP-500", "910 FCFA", "4 jours", "88%", "Alternatif"]
+          ]}
+        />
+        <section className="article-action-grid">
+          {["Ajouter fournisseur", "Comparer performance", "Voir historique achats", "Créer demande prix"].map((action) => (
+            <button key={action} onClick={() => onAction(`${action} : workflow fournisseur prêt.`)} type="button">{action}</button>
+          ))}
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Financier") {
+    return (
+      <div className="article-info-columns">
+        <section>
+          <h2>Prix, taxes & marges</h2>
+          <InfoRows
+            rows={[
+              ["Prix d'achat moyen", "850 FCFA"],
+              ["Prix de vente unitaire", "1 250 FCFA"],
+              ["TVA", "18%"],
+              ["Marge brute", "47,1%"],
+              ["Coût de possession", "4,8%"],
+              ["Valorisation stock", "3 125 000 FCFA"]
+            ]}
+          />
+        </section>
+        <section>
+          <h2>Comptabilité</h2>
+          <InfoRows
+            rows={[
+              ["Compte stock", "311100 - Médicaments"],
+              ["Compte achat", "601200 - Achats santé"],
+              ["Compte vente", "701100 - Ventes articles"],
+              ["Méthode valorisation", "CUMP"],
+              ["Devise", "XOF"],
+              ["Centre de coût", "Supply Santé"]
+            ]}
+          />
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Lots & Séries") {
+    return (
+      <div className="article-tab-stack">
+        <ArticleMiniTable
+          columns={["Lot/Série", "Quantité", "Expiration", "Statut", "Traçabilité", "Emplacement"]}
+          rows={[
+            ["LOT-240501", "720", "15/08/2024", "Actif", "Complète", "Dakar A-12"],
+            ["LOT-240488", "960", "12/12/2026", "Actif", "Complète", "Thiès B-04"],
+            ["LOT-240401", "120", "01/07/2024", "Quarantaine", "En contrôle", "Dakar Q-02"]
+          ]}
+        />
+        <section className="article-action-grid">
+          {["Tracer lot", "Mettre en quarantaine", "Créer rappel produit", "Voir péremptions"].map((action) => (
+            <button key={action} onClick={() => onAction(`${action} : workflow lot prêt.`)} type="button">{action}</button>
+          ))}
+        </section>
+      </div>
+    );
+  }
+
+  if (activeTab === "Documents") {
+    return (
+      <div className="article-info-columns">
+        <section>
+          <h2>Documents associés</h2>
+          <div className="document-list">
+            {["Fiche technique.pdf", "Certificat d'analyse.pdf", "Notice utilisation.pdf", "Autorisation mise sur marché.pdf"].map((document, index) => (
+              <button key={document} onClick={() => onAction(`${document} prêt pour téléchargement mock.`)} type="button">
+                <span>▣ {document}</span>
+                <small>{[245, 320, 512, 780][index]} KB</small>
+                <small>v{index + 1}.0</small>
+                <b>⇩</b>
+              </button>
+            ))}
+          </div>
+        </section>
+        <section>
+          <h2>OCR & versions</h2>
+          <div className="article-action-grid">
+            {["Ajouter document", "Lancer OCR", "Comparer versions", "Signer document", "Archiver version"].map((action) => (
+              <button key={action} onClick={() => onAction(`${action} : document workflow prêt.`)} type="button">{action}</button>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="article-tab-stack">
+      <ArticleMiniTable
+        columns={["Date", "Type", "Action", "Acteur", "Canal", "Détail"]}
+        rows={[
+          ["31/05/2024 14:32", "Modification", "Prix de vente mis à jour", "Fatou NDIAYE", "Web", "1 200 → 1 250 FCFA"],
+          ["31/05/2024 09:14", "Scan", "EAN13 scanné", "Amadou DIOP", "Mobile", article.barcode],
+          ["30/05/2024 17:40", "Mouvement", "Réception stock", "Nawa Sarr", "Entrepôt", "+ 2 500 boîtes"],
+          ["12/01/2024 10:02", "Document", "Fiche technique ajoutée", "Admin", "Web", "v1.0"]
+        ]}
+      />
+    </div>
+  );
+}
+
+function ArticleMiniTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
+  return (
+    <table className="article-mini-table">
+      <thead>
+        <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.join("-")}>{row.map((cell, index) => <td key={`${cell}-${index}`}>{cell}</td>)}</tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
