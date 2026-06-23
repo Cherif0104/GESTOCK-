@@ -3082,6 +3082,120 @@ input {
   padding: 0.82rem;
 }
 
+.article-tab-shell {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.article-tab-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.78rem 0.82rem 0;
+  padding: 0.55rem 0.68rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.38rem;
+  background: #eff6ff;
+  color: #0f3b86;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.article-tab-notice button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 950;
+}
+
+.article-tab-toolbar,
+.article-tab-control-panel,
+.article-code-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+
+.article-tab-control-panel {
+  align-items: end;
+  padding: 0.7rem;
+  border: 1px solid #dfe6f1;
+  border-radius: 0.42rem;
+  background: #ffffff;
+}
+
+.article-tab-control-panel label {
+  display: grid;
+  min-width: 11rem;
+  gap: 0.25rem;
+  color: #52617c;
+  font-size: 0.58rem;
+  font-weight: 850;
+}
+
+.article-tab-control-panel input,
+.article-tab-control-panel select {
+  min-height: 2rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  padding: 0 0.65rem;
+  color: #071942;
+  font-size: 0.66rem;
+  font-weight: 760;
+}
+
+.article-tab-toolbar button,
+.article-tab-control-panel button,
+.article-code-switcher button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #f8fafc;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+  padding: 0 0.65rem;
+}
+
+.article-code-switcher button.active {
+  border-color: #0b65ff;
+  background: #eef5ff;
+  color: #0b65ff;
+}
+
+.article-code-preview {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+  padding: 0.75rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.42rem;
+  background:
+    repeating-linear-gradient(90deg, #071942 0 0.1rem, transparent 0.1rem 0.38rem),
+    #ffffff;
+  color: #071942;
+}
+
+.article-code-preview strong,
+.article-code-preview span {
+  width: fit-content;
+  padding: 0.15rem 0.38rem;
+  border-radius: 0.22rem;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.article-code-preview strong {
+  font-size: 0.64rem;
+}
+
+.article-code-preview span {
+  font-size: 0.58rem;
+  font-weight: 850;
+}
+
 .article-info-columns h2,
 .side-info-card > strong,
 .quick-article-actions > strong,

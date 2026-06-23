@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import type { GestockViewModel } from "../application/buildGestockViewModel";
 import { simulateLogin } from "../application/simulateLogin";
 import type { MockOrganizationAccess, MockUser, PostLoginDestination } from "../domain/models";
@@ -2767,9 +2767,42 @@ function ArticleTabContent({
   images: ArticleImage[];
   onAction: (message: string | null) => void;
 }) {
+  const [tabNotice, setTabNotice] = useState<string | null>(null);
+  const [qualityValidated, setQualityValidated] = useState(false);
+  const [logisticsValidated, setLogisticsValidated] = useState(false);
+  const [reservationDraft, setReservationDraft] = useState(350);
+  const [selectedCodeType, setSelectedCodeType] = useState("EAN13");
+  const [approvedSupplier, setApprovedSupplier] = useState("PHARMA CI");
+  const [marginScenario, setMarginScenario] = useState<"standard" | "promo" | "premium">("standard");
+  const [selectedLot, setSelectedLot] = useState("LOT-240501");
+  const [documentCount, setDocumentCount] = useState(4);
+  const [historyFilter, setHistoryFilter] = useState("Tous");
+
+  const recordTabAction = (message: string) => {
+    setTabNotice(message);
+    onAction(message);
+  };
+  const marginByScenario = {
+    standard: "47,1%",
+    promo: "36,4%",
+    premium: "52,8%"
+  }[marginScenario];
+
+  const tabShell = (children: ReactNode) => (
+    <div className="article-tab-shell">
+      {tabNotice ? (
+        <p className="article-tab-notice">
+          {tabNotice}
+          <button onClick={() => setTabNotice(null)} type="button">x</button>
+        </p>
+      ) : null}
+      {children}
+    </div>
+  );
+
   if (activeTab === "Général") {
     return (
-      <div className="article-info-columns">
+      tabShell(<div className="article-info-columns">
         <section>
           <h2>Informations générales</h2>
           <InfoRows
@@ -2785,6 +2818,14 @@ function ArticleTabContent({
               ["Image principale", images.find((image) => image.isCover)?.name ?? "Aucune image"]
             ]}
           />
+          <div className="article-tab-toolbar">
+            <button onClick={() => recordTabAction("Fiche article contrôlée : libellés, catégorie, famille et visuel principal validés.")} type="button">
+              Controler la fiche
+            </button>
+            <button onClick={() => setQualityValidated((current) => !current)} type="button">
+              {qualityValidated ? "Qualite validee" : "Valider qualite"}
+            </button>
+          </div>
         </section>
         <section>
           <h2>Images</h2>
@@ -2797,21 +2838,21 @@ function ArticleTabContent({
           <h2>Qualité fiche</h2>
           <div className="article-mini-metrics">
             {[
-              ["Complétude", "96%"],
-              ["Documents", "4"],
-              ["Dernière revue", "31/05/2024"]
+              ["Complétude", qualityValidated ? "100%" : "96%"],
+              ["Documents", String(documentCount)],
+              ["Dernière revue", qualityValidated ? "Aujourd'hui" : "31/05/2024"]
             ].map(([label, value]) => (
               <span key={label}><small>{label}</small><b>{value}</b></span>
             ))}
           </div>
         </section>
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Logistique") {
     return (
-      <div className="article-info-columns">
+      tabShell(<div className="article-info-columns">
         <section>
           <h2>Conditionnement & dimensions</h2>
           <InfoRows
@@ -2822,7 +2863,7 @@ function ArticleTabContent({
               ["Unité d'achat", "Carton (50 boîtes)"],
               ["Poids net", "0,050 kg"],
               ["Poids brut", "0,062 kg"],
-              ["Volume", "0,00012 m³"],
+              ["Volume", "0,00012 m3"],
               ["Dimensions", "12 x 8 x 3 cm"]
             ]}
           />
@@ -2838,26 +2879,56 @@ function ArticleTabContent({
               ["Plage température", "15°C - 30°C"],
               ["Transport", "Sec / non dangereux"],
               ["Fragilité", "Standard"],
-              ["Durée de vie", "36 mois"]
+              ["Durée de vie", "36 mois"],
+              ["Validation logistique", logisticsValidated ? "Validee" : "A controler"]
             ]}
           />
+          <div className="article-tab-toolbar">
+            <button onClick={() => setLogisticsValidated((current) => !current)} type="button">
+              {logisticsValidated ? "Retirer validation" : "Valider logistique"}
+            </button>
+            <button onClick={() => recordTabAction("Simulation palette : 80 cartons, 4 000 boites, charge estimee 248 kg.")} type="button">
+              Simuler palette
+            </button>
+            <button onClick={() => recordTabAction("Regle transport sec activee pour les prochains transferts.")} type="button">
+              Appliquer regle transport
+            </button>
+          </div>
         </section>
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Stock") {
     return (
-      <div className="article-tab-stack">
+      tabShell(<div className="article-tab-stack">
         <section className="article-mini-metrics">
           {[
             ["Stock min", "500 boîtes"],
             ["Stock max", "4 500 boîtes"],
             ["Point commande", "850 boîtes"],
-            ["Réapprovisionnement", "Automatique"]
+            ["Reservee mock", `${reservationDraft} boites`],
+            ["Réapprovisionnement", reservationDraft > 800 ? "A accelerer" : "Automatique"]
           ].map(([label, value]) => (
             <span key={label}><small>{label}</small><b>{value}</b></span>
           ))}
+        </section>
+        <section className="article-tab-control-panel">
+          <label>
+            <span>Quantite a reserver</span>
+            <input
+              min="0"
+              onChange={(event) => setReservationDraft(Number(event.target.value) || 0)}
+              type="number"
+              value={reservationDraft}
+            />
+          </label>
+          <button onClick={() => recordTabAction(`${reservationDraft} boites reservees en simulation stock.`)} type="button">
+            Reserver stock
+          </button>
+          <button onClick={() => recordTabAction("Demande de reapprovisionnement creee depuis le seuil stock.")} type="button">
+            Creer reapprovisionnement
+          </button>
         </section>
         <ArticleMiniTable
           columns={["Entrepôt", "Emplacement", "Disponible", "Réservé", "Bloqué", "Statut"]}
@@ -2867,13 +2938,13 @@ function ArticleTabContent({
             ["Kaolack", "C-03", "300", "0", "0", "Sous stock"]
           ]}
         />
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Identification") {
     return (
-      <div className="article-info-columns">
+      tabShell(<div className="article-info-columns">
         <section>
           <h2>Codes & identifiants</h2>
           <InfoRows
@@ -2887,50 +2958,94 @@ function ArticleTabContent({
               ["Référence fabricant", "PARA500-BIO"]
             ]}
           />
-        </section>
-        <section>
-          <h2>Impression & scan</h2>
-          <div className="article-action-grid">
-            {["Imprimer étiquette", "Imprimer POS", "Générer QR Code", "Générer DataMatrix", "Tester scan EAN13", "Associer nouveau code"].map((action) => (
-              <button key={action} onClick={() => onAction(`${action} : prêt en mode mock.`)} type="button">{action}</button>
+          <div className="article-code-switcher">
+            {["EAN13", "QR Code", "DataMatrix", "SKU"].map((codeType) => (
+              <button
+                className={selectedCodeType === codeType ? "active" : ""}
+                key={codeType}
+                onClick={() => setSelectedCodeType(codeType)}
+                type="button"
+              >
+                {codeType}
+              </button>
             ))}
           </div>
         </section>
-      </div>
+        <section>
+          <h2>Impression & scan</h2>
+          <div className="article-code-preview">
+            <strong>{selectedCodeType}</strong>
+            <span>{selectedCodeType === "EAN13" ? article.barcode : selectedCodeType === "QR Code" ? `GESTOCK://${article.reference}` : selectedCodeType === "DataMatrix" ? "01061611012345671724081510LOT240501" : `${article.reference}-BOX20`}</span>
+          </div>
+          <div className="article-action-grid">
+            {["Imprimer étiquette", "Imprimer POS", "Générer QR Code", "Générer DataMatrix", "Tester scan EAN13", "Associer nouveau code"].map((action) => (
+              <button key={action} onClick={() => recordTabAction(`${action} : execute sur ${selectedCodeType} en mode mock.`)} type="button">{action}</button>
+            ))}
+          </div>
+        </section>
+      </div>)
     );
   }
 
   if (activeTab === "Fournisseurs") {
+    const supplierRows = [
+      ["PHARMA CI", "PARA500-BIO", "850 FCFA", "5 jours", "97%", approvedSupplier === "PHARMA CI" ? "Principal" : "Alternatif"],
+      ["MedEquip", "ME-PARA-500", "890 FCFA", "7 jours", "91%", approvedSupplier === "MedEquip" ? "Principal" : "Alternatif"],
+      ["Dakar Pharma", "DP-500", "910 FCFA", "4 jours", "88%", approvedSupplier === "Dakar Pharma" ? "Principal" : "Alternatif"]
+    ];
+
     return (
-      <div className="article-tab-stack">
+      tabShell(<div className="article-tab-stack">
+        <section className="article-tab-control-panel">
+          <label>
+            <span>Fournisseur principal</span>
+            <select onChange={(event) => setApprovedSupplier(event.target.value)} value={approvedSupplier}>
+              {supplierRows.map(([supplier]) => <option key={supplier}>{supplier}</option>)}
+            </select>
+          </label>
+          <button onClick={() => recordTabAction(`${approvedSupplier} defini comme fournisseur principal pour ${article.reference}.`)} type="button">
+            Enregistrer fournisseur
+          </button>
+          <button onClick={() => recordTabAction("Comparatif fournisseur recalcule : prix, delai, qualite, litiges.")} type="button">
+            Recalculer performance
+          </button>
+        </section>
         <ArticleMiniTable
           columns={["Fournisseur", "Référence", "Prix achat", "Délai", "Performance", "Statut"]}
-          rows={[
-            ["PHARMA CI", "PARA500-BIO", "850 FCFA", "5 jours", "97%", "Principal"],
-            ["MedEquip", "ME-PARA-500", "890 FCFA", "7 jours", "91%", "Alternatif"],
-            ["Dakar Pharma", "DP-500", "910 FCFA", "4 jours", "88%", "Alternatif"]
-          ]}
+          rows={supplierRows}
         />
         <section className="article-action-grid">
           {["Ajouter fournisseur", "Comparer performance", "Voir historique achats", "Créer demande prix"].map((action) => (
-            <button key={action} onClick={() => onAction(`${action} : workflow fournisseur prêt.`)} type="button">{action}</button>
+            <button key={action} onClick={() => recordTabAction(`${action} : workflow fournisseur pret pour ${approvedSupplier}.`)} type="button">{action}</button>
           ))}
         </section>
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Financier") {
     return (
-      <div className="article-info-columns">
+      tabShell(<div className="article-info-columns">
         <section>
           <h2>Prix, taxes & marges</h2>
+          <div className="article-code-switcher">
+            {(["standard", "promo", "premium"] as const).map((scenario) => (
+              <button
+                className={marginScenario === scenario ? "active" : ""}
+                key={scenario}
+                onClick={() => setMarginScenario(scenario)}
+                type="button"
+              >
+                {scenario}
+              </button>
+            ))}
+          </div>
           <InfoRows
             rows={[
               ["Prix d'achat moyen", "850 FCFA"],
-              ["Prix de vente unitaire", "1 250 FCFA"],
+              ["Prix de vente unitaire", marginScenario === "promo" ? "1 160 FCFA" : marginScenario === "premium" ? "1 340 FCFA" : "1 250 FCFA"],
               ["TVA", "18%"],
-              ["Marge brute", "47,1%"],
+              ["Marge brute", marginByScenario],
               ["Coût de possession", "4,8%"],
               ["Valorisation stock", "3 125 000 FCFA"]
             ]}
@@ -2948,41 +3063,73 @@ function ArticleTabContent({
               ["Centre de coût", "Supply Santé"]
             ]}
           />
+          <div className="article-tab-toolbar">
+            <button onClick={() => recordTabAction(`Scenario ${marginScenario} sauvegarde avec marge ${marginByScenario}.`)} type="button">
+              Sauvegarder prix
+            </button>
+            <button onClick={() => recordTabAction("Ecriture comptable simulee : stock, achat, vente et TVA controles.")} type="button">
+              Simuler ecritures
+            </button>
+          </div>
         </section>
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Lots & Séries") {
+    const lotRows = [
+      ["LOT-240501", "720", "15/08/2024", selectedLot === "LOT-240501" ? "Selectionne" : "Actif", "Complète", "Dakar A-12"],
+      ["LOT-240488", "960", "12/12/2026", selectedLot === "LOT-240488" ? "Selectionne" : "Actif", "Complète", "Thiès B-04"],
+      ["LOT-240401", "120", "01/07/2024", selectedLot === "LOT-240401" ? "Selectionne" : "Quarantaine", "En contrôle", "Dakar Q-02"]
+    ];
+
     return (
-      <div className="article-tab-stack">
+      tabShell(<div className="article-tab-stack">
+        <section className="article-tab-control-panel">
+          <label>
+            <span>Lot actif</span>
+            <select onChange={(event) => setSelectedLot(event.target.value)} value={selectedLot}>
+              {lotRows.map(([lot]) => <option key={lot}>{lot}</option>)}
+            </select>
+          </label>
+          <button onClick={() => recordTabAction(`Traçabilité complete ouverte pour ${selectedLot}.`)} type="button">
+            Ouvrir tracabilite
+          </button>
+          <button onClick={() => recordTabAction(`${selectedLot} bascule en quarantaine mock avec motif controle qualite.`)} type="button">
+            Quarantaine
+          </button>
+        </section>
         <ArticleMiniTable
           columns={["Lot/Série", "Quantité", "Expiration", "Statut", "Traçabilité", "Emplacement"]}
-          rows={[
-            ["LOT-240501", "720", "15/08/2024", "Actif", "Complète", "Dakar A-12"],
-            ["LOT-240488", "960", "12/12/2026", "Actif", "Complète", "Thiès B-04"],
-            ["LOT-240401", "120", "01/07/2024", "Quarantaine", "En contrôle", "Dakar Q-02"]
-          ]}
+          rows={lotRows}
         />
         <section className="article-action-grid">
           {["Tracer lot", "Mettre en quarantaine", "Créer rappel produit", "Voir péremptions"].map((action) => (
-            <button key={action} onClick={() => onAction(`${action} : workflow lot prêt.`)} type="button">{action}</button>
+            <button key={action} onClick={() => recordTabAction(`${action} : workflow lot pret sur ${selectedLot}.`)} type="button">{action}</button>
           ))}
         </section>
-      </div>
+      </div>)
     );
   }
 
   if (activeTab === "Documents") {
+    const documents = [
+      "Fiche technique.pdf",
+      "Certificat d'analyse.pdf",
+      "Notice utilisation.pdf",
+      "Autorisation mise sur marche.pdf",
+      ...Array.from({ length: Math.max(0, documentCount - 4) }, (_, index) => `Document ajoute ${index + 1}.pdf`)
+    ];
+
     return (
-      <div className="article-info-columns">
+      tabShell(<div className="article-info-columns">
         <section>
           <h2>Documents associés</h2>
           <div className="document-list">
-            {["Fiche technique.pdf", "Certificat d'analyse.pdf", "Notice utilisation.pdf", "Autorisation mise sur marché.pdf"].map((document, index) => (
+            {documents.map((document, index) => (
               <button key={document} onClick={() => onAction(`${document} prêt pour téléchargement mock.`)} type="button">
                 <span>▣ {document}</span>
-                <small>{[245, 320, 512, 780][index]} KB</small>
+                <small>{[245, 320, 512, 780, 210, 190][index] ?? 180} KB</small>
                 <small>v{index + 1}.0</small>
                 <b>⇩</b>
               </button>
@@ -2991,28 +3138,57 @@ function ArticleTabContent({
         </section>
         <section>
           <h2>OCR & versions</h2>
+          <div className="article-mini-metrics">
+            {[
+              ["Documents", String(documentCount)],
+              ["OCR valides", `${Math.max(1, documentCount - 1)}`],
+              ["Derniere version", `v${documentCount}.0`]
+            ].map(([label, value]) => (
+              <span key={label}><small>{label}</small><b>{value}</b></span>
+            ))}
+          </div>
           <div className="article-action-grid">
-            {["Ajouter document", "Lancer OCR", "Comparer versions", "Signer document", "Archiver version"].map((action) => (
-              <button key={action} onClick={() => onAction(`${action} : document workflow prêt.`)} type="button">{action}</button>
+            <button onClick={() => {
+              setDocumentCount((current) => current + 1);
+              recordTabAction("Nouveau document ajoute et versionne en mode mock.");
+            }} type="button">Ajouter document</button>
+            {["Lancer OCR", "Comparer versions", "Signer document", "Archiver version"].map((action) => (
+              <button key={action} onClick={() => recordTabAction(`${action} : document workflow pret.`)} type="button">{action}</button>
             ))}
           </div>
         </section>
-      </div>
+      </div>)
     );
   }
 
+  const historyRows = [
+    ["31/05/2024 14:32", "Modification", "Prix de vente mis à jour", "Fatou NDIAYE", "Web", "1 200 -> 1 250 FCFA"],
+    ["31/05/2024 09:14", "Scan", "EAN13 scanné", "Amadou DIOP", "Mobile", article.barcode],
+    ["30/05/2024 17:40", "Mouvement", "Réception stock", "Nawa Sarr", "Entrepôt", "+ 2 500 boîtes"],
+    ["12/01/2024 10:02", "Document", "Fiche technique ajoutée", "Admin", "Web", "v1.0"]
+  ].filter((row) => historyFilter === "Tous" || row[1] === historyFilter);
+
   return (
-    <div className="article-tab-stack">
+    tabShell(<div className="article-tab-stack">
+      <section className="article-tab-control-panel">
+        <label>
+          <span>Filtre audit</span>
+          <select onChange={(event) => setHistoryFilter(event.target.value)} value={historyFilter}>
+            {["Tous", "Modification", "Scan", "Mouvement", "Document"].map((filter) => <option key={filter}>{filter}</option>)}
+          </select>
+        </label>
+        <button onClick={() => recordTabAction(`Export audit ${historyFilter} prepare en CSV mock.`)} type="button">
+          Exporter audit
+        </button>
+        <button onClick={() => recordTabAction("Chainage audit verifie : aucune rupture de piste detectee.")} type="button">
+          Verifier chainage
+        </button>
+      </section>
       <ArticleMiniTable
         columns={["Date", "Type", "Action", "Acteur", "Canal", "Détail"]}
-        rows={[
-          ["31/05/2024 14:32", "Modification", "Prix de vente mis à jour", "Fatou NDIAYE", "Web", "1 200 → 1 250 FCFA"],
-          ["31/05/2024 09:14", "Scan", "EAN13 scanné", "Amadou DIOP", "Mobile", article.barcode],
-          ["30/05/2024 17:40", "Mouvement", "Réception stock", "Nawa Sarr", "Entrepôt", "+ 2 500 boîtes"],
-          ["12/01/2024 10:02", "Document", "Fiche technique ajoutée", "Admin", "Web", "v1.0"]
-        ]}
+        rows={historyRows}
       />
-    </div>
+    </div>)
   );
 }
 
