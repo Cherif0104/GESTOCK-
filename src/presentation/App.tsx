@@ -2044,6 +2044,31 @@ function ArticlesModule({
     );
   }
 
+  if (actionPanel === "create" || actionPanel === "edit") {
+    return (
+      <ArticleFormWorkspace
+        initialArticle={editingArticle}
+        mode={actionPanel}
+        onCancel={() => {
+          setActionPanel(null);
+          setEditingArticle(null);
+        }}
+        onSave={(nextArticle) => {
+          upsertArticle(nextArticle);
+          setActionPanel(null);
+          setEditingArticle(null);
+          onAction(`Article ${nextArticle.reference} enregistré depuis le formulaire complet.`);
+        }}
+        onSaveAndNew={(nextArticle) => {
+          upsertArticle(nextArticle);
+          setEditingArticle(null);
+          setActionPanel("create");
+          onAction(`Article ${nextArticle.reference} enregistré. Nouveau formulaire prêt.`);
+        }}
+      />
+    );
+  }
+
   return (
     <section className="articles-page">
       <header className="articles-header">
@@ -2059,7 +2084,7 @@ function ArticlesModule({
             className="primary"
             onClick={() => {
               setEditingArticle(null);
-              setActionPanel(actionPanel === "create" ? null : "create");
+              setActionPanel("create");
             }}
             type="button"
           >
@@ -2274,6 +2299,399 @@ function ArticlesModule({
         </footer>
       </section>
     </section>
+  );
+}
+
+function buildArticleFormState(initialArticle: ArticleRecord | null) {
+  return {
+    reference: initialArticle?.reference ?? "PARA-500",
+    designation: initialArticle?.designation ?? "Paracétamol 500mg",
+    status: initialArticle?.status ?? "Actif",
+    description: "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre.",
+    category: initialArticle?.category ?? "Médicaments",
+    subCategory: "Analgésiques",
+    brand: "BIOPHARMA",
+    family: initialArticle?.family ?? "Comprimés",
+    sku: `${initialArticle?.reference ?? "PARA-500"}-BOX20`,
+    baseUnit: initialArticle?.unit ?? "Boîte",
+    purchaseUnit: "Carton (50 boîtes)",
+    saleUnit: "Boîte (20)",
+    packaging: "Boîte en carton",
+    netWeight: "0,050",
+    volume: "0,00012",
+    length: "10,0",
+    width: "5,0",
+    height: "8,0",
+    stockMin: "200",
+    stockMax: "3 000",
+    safetyStock: "300",
+    reorderPoint: "500",
+    valuationMethod: "FIFO",
+    managedStock: true,
+    trackLocation: false,
+    barcode: initialArticle?.barcode ?? "6161101234567",
+    manufacturerRef: "PARA500-BIO",
+    internalCode: "ART-2024-001256",
+    supplier: "PHARMA CI",
+    purchasePrice: "850",
+    salePrice: "1 250",
+    vat: "18",
+    lotManaged: true,
+    serialManaged: false,
+    expiryManaged: true,
+    documentName: "Fiche technique.pdf",
+    keywords: "paracétamol, douleur, fièvre, comprimé",
+    notes: "Produit à forte rotation. Vérifier régulièrement les dates de péremption.",
+    location: initialArticle?.location ?? "Dakar / A-12",
+    stock: initialArticle?.stock ?? "2 500",
+    averagePrice: initialArticle?.averagePrice ?? "1 250"
+  };
+}
+
+function ArticleFormWorkspace({
+  initialArticle,
+  mode,
+  onCancel,
+  onSave,
+  onSaveAndNew
+}: {
+  initialArticle: ArticleRecord | null;
+  mode: "create" | "edit";
+  onCancel: () => void;
+  onSave: (article: ArticleRecord) => void;
+  onSaveAndNew: (article: ArticleRecord) => void;
+}) {
+  const tabs = ["Général", "Logistique", "Stock", "Identification", "Fournisseurs", "Financier", "Lots & Séries", "Documents", "Autres"];
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [form, setForm] = useState(() => buildArticleFormState(initialArticle));
+  const updateField = (field: keyof typeof form, value: string | boolean) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+  const nextArticle = (): ArticleRecord => ({
+    reference: form.reference.trim().toUpperCase(),
+    designation: form.designation.trim(),
+    category: form.category,
+    family: form.family,
+    unit: form.baseUnit,
+    averagePrice: form.averagePrice,
+    stock: form.stock,
+    status: form.status as ArticleStatus,
+    barcode: form.barcode,
+    location: form.location,
+    icon: form.reference.trim().slice(0, 4).toUpperCase() || "ART"
+  });
+  const save = (andNew = false) => {
+    const article = nextArticle();
+
+    if (!article.reference || !article.designation) {
+      return;
+    }
+
+    if (andNew) {
+      onSaveAndNew(article);
+      setForm(buildArticleFormState(null));
+      setActiveTab("Général");
+      return;
+    }
+
+    onSave(article);
+  };
+
+  return (
+    <section className="article-create-page">
+      <div className="article-breadcrumb">
+        <button onClick={onCancel} type="button">Articles</button>
+        <span>›</span>
+        <strong>{mode === "edit" ? `Modifier ${initialArticle?.reference}` : "Nouvel article"}</strong>
+      </div>
+
+      <header className="article-create-header">
+        <div>
+          <h1>{mode === "edit" ? "Modifier un article" : "Créer un nouvel article"}</h1>
+          <p>Renseignez toutes les données qui alimenteront ensuite les onglets de la fiche Article.</p>
+        </div>
+        <div>
+          <button onClick={onCancel} type="button">Annuler</button>
+          <button onClick={() => save(false)} type="button">▣ Enregistrer</button>
+          <button className="primary" onClick={() => save(true)} type="button">Enregistrer & Nouveau ⌄</button>
+        </div>
+      </header>
+
+      <div className="article-create-layout">
+        <section className="article-create-card">
+          <nav className="article-form-tabs">
+            {tabs.map((tab) => (
+              <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+                {tab}
+              </button>
+            ))}
+          </nav>
+
+          {activeTab === "Général" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Informations générales">
+                <ArticleTextField field="reference" form={form} label="Référence" required updateField={updateField} />
+                <ArticleTextField field="designation" form={form} label="Désignation" required updateField={updateField} />
+                <ArticleSelectField field="status" form={form} label="Statut" options={["Actif", "Sous stock", "Rupture"]} updateField={updateField} />
+                <ArticleTextAreaField field="description" form={form} label="Description" updateField={updateField} />
+                <ArticleSelectField field="category" form={form} label="Catégorie" options={["Médicaments", "Consommables", "Matériaux", "Alimentaire", "Fournitures"]} updateField={updateField} />
+                <ArticleSelectField field="subCategory" form={form} label="Sous-catégorie" options={["Analgésiques", "Protection", "Construction", "Denrées", "Papeterie"]} updateField={updateField} />
+                <ArticleTextField field="brand" form={form} label="Marque" updateField={updateField} />
+                <ArticleTextField field="family" form={form} label="Famille" updateField={updateField} />
+                <ArticleTextField field="sku" form={form} label="SKU" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Logistique" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Caractéristiques logistiques">
+                <ArticleSelectField field="baseUnit" form={form} label="Unité de base" options={["Boîte", "Pièce", "Sac", "Bidon", "Bouteille"]} updateField={updateField} />
+                <ArticleSelectField field="purchaseUnit" form={form} label="Unité d'achat" options={["Carton (50 boîtes)", "Palette", "Lot fournisseur", "Unité"]} updateField={updateField} />
+                <ArticleSelectField field="saleUnit" form={form} label="Unité de vente" options={["Boîte (20)", "Pièce", "Sac", "Carton"]} updateField={updateField} />
+                <ArticleTextField field="packaging" form={form} label="Conditionnement" updateField={updateField} />
+                <ArticleTextField field="netWeight" form={form} label="Poids net (kg)" updateField={updateField} />
+                <ArticleTextField field="volume" form={form} label="Volume (m3)" updateField={updateField} />
+                <ArticleTextField field="length" form={form} label="Longueur" updateField={updateField} />
+                <ArticleTextField field="width" form={form} label="Largeur" updateField={updateField} />
+                <ArticleTextField field="height" form={form} label="Hauteur" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Stock" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Gestion des stocks">
+                <ArticleTextField field="stockMin" form={form} label="Stock minimum" updateField={updateField} />
+                <ArticleTextField field="stockMax" form={form} label="Stock maximum" updateField={updateField} />
+                <ArticleTextField field="safetyStock" form={form} label="Stock de sécurité" updateField={updateField} />
+                <ArticleTextField field="reorderPoint" form={form} label="Point de commande" updateField={updateField} />
+                <ArticleTextField field="stock" form={form} label="Stock initial" updateField={updateField} />
+                <ArticleSelectField field="valuationMethod" form={form} label="Méthode de valorisation" options={["FIFO", "CUMP", "LIFO", "Standard"]} updateField={updateField} />
+                <ArticleCheckboxField field="managedStock" form={form} label="Article géré en stock" updateField={updateField} />
+                <ArticleCheckboxField field="trackLocation" form={form} label="Article suivi par emplacement" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Identification" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Identification & codes">
+                <ArticleTextField field="barcode" form={form} label="Code-barres EAN13" required updateField={updateField} />
+                <ArticleTextField field="manufacturerRef" form={form} label="Référence fabricant" updateField={updateField} />
+                <ArticleTextField field="internalCode" form={form} label="Code interne" updateField={updateField} />
+                <ArticleTextField field="sku" form={form} label="SKU" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Fournisseurs" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Fournisseurs">
+                <ArticleSelectField field="supplier" form={form} label="Fournisseur principal" options={["PHARMA CI", "MedEquip", "Dakar Pharma", "BioPharma"]} updateField={updateField} />
+                <ArticleTextField field="manufacturerRef" form={form} label="Référence fournisseur" updateField={updateField} />
+                <ArticleTextField field="purchasePrice" form={form} label="Prix achat" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Financier" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Prix & comptabilité">
+                <ArticleTextField field="purchasePrice" form={form} label="Prix d'achat moyen" updateField={updateField} />
+                <ArticleTextField field="salePrice" form={form} label="Prix de vente" updateField={updateField} />
+                <ArticleTextField field="averagePrice" form={form} label="Prix moyen stock" updateField={updateField} />
+                <ArticleTextField field="vat" form={form} label="TVA (%)" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Lots & Séries" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Lots, séries & péremption">
+                <ArticleCheckboxField field="lotManaged" form={form} label="Gestion par lot" updateField={updateField} />
+                <ArticleCheckboxField field="serialManaged" form={form} label="Sérialisation" updateField={updateField} />
+                <ArticleCheckboxField field="expiryManaged" form={form} label="Gestion péremption" updateField={updateField} />
+                <ArticleTextField field="reorderPoint" form={form} label="Seuil rappel produit" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Documents" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Documents & OCR">
+                <ArticleTextField field="documentName" form={form} label="Document principal" updateField={updateField} />
+                <ArticleTextAreaField field="notes" form={form} label="Notes documentaires" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+
+          {activeTab === "Autres" ? (
+            <div className="article-form-sections">
+              <ArticleFormSection title="Description complémentaire">
+                <ArticleTextField field="keywords" form={form} label="Mots clés" updateField={updateField} />
+                <ArticleTextAreaField field="notes" form={form} label="Notes internes" updateField={updateField} />
+              </ArticleFormSection>
+            </div>
+          ) : null}
+        </section>
+
+        <aside className="article-create-side">
+          <article>
+            <strong>Identification & codes</strong>
+            <label>
+              <span>Code-barres (EAN13)</span>
+              <input onChange={(event) => updateField("barcode", event.target.value)} value={form.barcode} />
+            </label>
+            <label>
+              <span>Référence fabricant</span>
+              <input onChange={(event) => updateField("manufacturerRef", event.target.value)} value={form.manufacturerRef} />
+            </label>
+            <label>
+              <span>Code interne</span>
+              <input onChange={(event) => updateField("internalCode", event.target.value)} value={form.internalCode} />
+            </label>
+            <div className="article-create-qr">
+              <div className="qr-mock" />
+              <div>
+                <b>{form.reference}</b>
+                <small>{form.designation}</small>
+                <small>EAN13 : {form.barcode}</small>
+                <small>SKU : {form.sku}</small>
+              </div>
+            </div>
+            <footer>
+              <button type="button">Régénérer</button>
+              <button type="button">Télécharger</button>
+              <button type="button">Imprimer étiquette</button>
+            </footer>
+          </article>
+
+          <article>
+            <strong>Aperçu rapide</strong>
+            <InfoRows
+              rows={[
+                ["Stock actuel", `${form.stock} ${form.baseUnit}s`],
+                ["Stock minimum", `${form.stockMin} ${form.baseUnit}s`],
+                ["Fournisseur principal", form.supplier],
+                ["Prix d'achat moyen", `${form.purchasePrice} FCFA`],
+                ["Prix de vente", `${form.salePrice} FCFA`],
+                ["Marge brute", "47,1%"]
+              ]}
+            />
+          </article>
+
+          <article>
+            <strong>Actions rapides</strong>
+            <div className="article-create-actions">
+              <button type="button">Scanner code-barres</button>
+              <button type="button">Importer depuis Excel</button>
+              <button type="button">Dupliquer un article</button>
+            </div>
+          </article>
+        </aside>
+      </div>
+
+      <footer className="article-create-footer">
+        <span>* Champs obligatoires</span>
+        <span>Créé le 31/05/2024 par Amadou DIOP</span>
+        <span>Dernière modification : -</span>
+      </footer>
+    </section>
+  );
+}
+
+type ArticleFormState = ReturnType<typeof buildArticleFormState>;
+type ArticleFormField = keyof ArticleFormState;
+
+function ArticleFormSection({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <section className="article-form-section">
+      <h2>{title}</h2>
+      <div>{children}</div>
+    </section>
+  );
+}
+
+function ArticleTextField({
+  field,
+  form,
+  label,
+  required = false,
+  updateField
+}: {
+  field: ArticleFormField;
+  form: ArticleFormState;
+  label: string;
+  required?: boolean;
+  updateField: (field: ArticleFormField, value: string | boolean) => void;
+}) {
+  return (
+    <label>
+      <span>{label}{required ? " *" : ""}</span>
+      <input onChange={(event) => updateField(field, event.target.value)} value={String(form[field])} />
+    </label>
+  );
+}
+
+function ArticleTextAreaField({
+  field,
+  form,
+  label,
+  updateField
+}: {
+  field: ArticleFormField;
+  form: ArticleFormState;
+  label: string;
+  updateField: (field: ArticleFormField, value: string | boolean) => void;
+}) {
+  return (
+    <label className="wide">
+      <span>{label}</span>
+      <textarea onChange={(event) => updateField(field, event.target.value)} value={String(form[field])} />
+    </label>
+  );
+}
+
+function ArticleSelectField({
+  field,
+  form,
+  label,
+  options,
+  updateField
+}: {
+  field: ArticleFormField;
+  form: ArticleFormState;
+  label: string;
+  options: string[];
+  updateField: (field: ArticleFormField, value: string | boolean) => void;
+}) {
+  return (
+    <label>
+      <span>{label}</span>
+      <select onChange={(event) => updateField(field, event.target.value)} value={String(form[field])}>
+        {options.map((option) => <option key={option}>{option}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function ArticleCheckboxField({
+  field,
+  form,
+  label,
+  updateField
+}: {
+  field: ArticleFormField;
+  form: ArticleFormState;
+  label: string;
+  updateField: (field: ArticleFormField, value: string | boolean) => void;
+}) {
+  return (
+    <label className="checkbox-field">
+      <input checked={Boolean(form[field])} onChange={(event) => updateField(field, event.target.checked)} type="checkbox" />
+      <span>{label}</span>
+    </label>
   );
 }
 
