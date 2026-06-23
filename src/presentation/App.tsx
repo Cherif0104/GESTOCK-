@@ -41,6 +41,14 @@ interface ArticleRecord {
   icon: string;
 }
 
+interface ArticleImage {
+  id: string;
+  label: string;
+  name: string;
+  caption: string;
+  isCover: boolean;
+}
+
 interface CatalogProduct {
   code: string;
   name: string;
@@ -1233,6 +1241,7 @@ function DashboardScreen({
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [readMessageIds, setReadMessageIds] = useState<string[]>([]);
   const [topbarSearch, setTopbarSearch] = useState("");
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const searchPlaceholder =
     activeNav === "Articles"
       ? selectedArticle
@@ -1241,8 +1250,12 @@ function DashboardScreen({
       : "Rechercher (articles, commandes, fournisseurs...)";
 
   return (
-    <main className="erp-shell">
-      <aside className="erp-sidebar">
+    <main className={`erp-shell ${sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`}>
+      <aside
+        className="erp-sidebar"
+        onMouseEnter={() => setSidebarExpanded(true)}
+        onMouseLeave={() => setSidebarExpanded(false)}
+      >
         <Logo className="erp-logo" />
         <button className="erp-org-switch" onClick={onSwitchOrganization} type="button">
           <span className="org-cube" />
@@ -1286,7 +1299,11 @@ function DashboardScreen({
 
       <section className="erp-main">
         <header className="erp-topbar">
-          <button onClick={() => onAction("Menu latéral compact activé en mode mock.")} type="button">☰</button>
+          {!sidebarExpanded ? (
+            <button className="sidebar-toggle" onClick={() => setSidebarExpanded(true)} type="button">
+              ☰
+            </button>
+          ) : null}
           <label>
             <span>⌕</span>
             <input
@@ -1307,22 +1324,26 @@ function DashboardScreen({
               onClick={() => setOpenTopbarPanel(openTopbarPanel === "notifications" ? null : "notifications")}
               type="button"
             >
-              ♧<em>{Math.max(0, 12 - readNotificationIds.length)}</em>
+              <span className="topbar-icon topbar-icon-bell" aria-hidden="true" />
+              <em>{Math.max(0, 12 - readNotificationIds.length)}</em>
             </button>
             <button
               className={openTopbarPanel === "messages" ? "active" : ""}
               onClick={() => setOpenTopbarPanel(openTopbarPanel === "messages" ? null : "messages")}
               type="button"
             >
-              ✉<em>{Math.max(0, 5 - readMessageIds.length)}</em>
+              <span className="topbar-icon topbar-icon-mail" aria-hidden="true" />
+              <em>{Math.max(0, 5 - readMessageIds.length)}</em>
             </button>
-            <button onClick={() => onAction("Aide contextuelle du dashboard.")} type="button">?</button>
+            <button onClick={() => onAction("Aide contextuelle du dashboard.")} type="button">
+              <span className="topbar-icon topbar-icon-help" aria-hidden="true" />
+            </button>
             <button
               className={`user-menu ${openTopbarPanel === "user" ? "active" : ""}`}
               onClick={() => setOpenTopbarPanel(openTopbarPanel === "user" ? null : "user")}
               type="button"
             >
-              <span />
+              <span className="user-avatar">{user.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</span>
               <b>{user.name}</b>
               <small>{user.role}</small>
               ⌄
@@ -1849,9 +1870,33 @@ function ArticlesModule({
   const [categoryFilter, setCategoryFilter] = useState("Toutes");
   const [selectedReferences, setSelectedReferences] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-  const [actionPanel, setActionPanel] = useState<"create" | "import" | "scan" | "columns" | null>(null);
-  const [draftArticles, setDraftArticles] = useState<ArticleRecord[]>([]);
-  const articles = [...draftArticles, ...articleItems];
+  const [actionPanel, setActionPanel] = useState<"create" | "edit" | "import" | "scan" | "columns" | null>(null);
+  const [records, setRecords] = useState<ArticleRecord[]>(articleItems);
+  const [editingArticle, setEditingArticle] = useState<ArticleRecord | null>(null);
+  const [articleImages, setArticleImages] = useState<Record<string, ArticleImage[]>>(() =>
+    Object.fromEntries(
+      articleItems.map((item) => [
+        item.reference,
+        [
+          {
+            id: `${item.reference}-cover`,
+            label: item.icon,
+            name: item.designation,
+            caption: "Photo principale",
+            isCover: true
+          },
+          {
+            id: `${item.reference}-pack`,
+            label: item.unit.slice(0, 4).toUpperCase(),
+            name: `${item.designation} - conditionnement`,
+            caption: "Conditionnement",
+            isCover: false
+          }
+        ]
+      ])
+    )
+  );
+  const articles = records;
   const categories = ["Toutes", ...Array.from(new Set(articles.map((item) => item.category)))];
   const filteredArticles = articles.filter((item) => {
     const matchesQuery = [item.reference, item.designation, item.barcode, item.category, item.location]
@@ -1899,12 +1944,102 @@ function ArticlesModule({
     setCategoryFilter(categories[(currentIndex + 1) % categories.length]);
   };
 
+  const upsertArticle = (nextArticle: ArticleRecord) => {
+    const exists = records.some((item) => item.reference === nextArticle.reference);
+    setRecords((current) =>
+      exists
+        ? current.map((item) => item.reference === nextArticle.reference ? nextArticle : item)
+        : [nextArticle, ...current]
+    );
+    setArticleImages((current) => ({
+      ...current,
+      [nextArticle.reference]: current[nextArticle.reference] ?? [
+        {
+          id: `${nextArticle.reference}-cover`,
+          label: nextArticle.icon,
+          name: nextArticle.designation,
+          caption: "Photo principale",
+          isCover: true
+        }
+      ]
+    }));
+  };
+
+  const deleteArticle = (reference: string) => {
+    setRecords((current) => current.filter((item) => item.reference !== reference));
+    setSelectedReferences((current) => current.filter((item) => item !== reference));
+    setArticleImages((current) => {
+      const nextImages = { ...current };
+      delete nextImages[reference];
+      return nextImages;
+    });
+    onAction(`Article ${reference} supprimé de la session mock.`);
+  };
+
+  const addArticleImage = (reference: string) => {
+    const imageCount = (articleImages[reference] ?? []).length + 1;
+    setArticleImages((current) => ({
+      ...current,
+      [reference]: [
+        ...(current[reference] ?? []),
+        {
+          id: `${reference}-image-${Date.now()}`,
+          label: `IMG${imageCount}`,
+          name: `${reference} - image ${imageCount}`,
+          caption: "Nouvelle photo ajoutée",
+          isCover: (current[reference] ?? []).length === 0
+        }
+      ]
+    }));
+    onAction(`Nouvelle image ajoutée à ${reference} en mode mock.`);
+  };
+
+  const deleteArticleImage = (reference: string, imageId: string) => {
+    setArticleImages((current) => {
+      const remaining = (current[reference] ?? []).filter((image) => image.id !== imageId);
+      return {
+        ...current,
+        [reference]: remaining.map((image, index) => ({
+          ...image,
+          isCover: remaining.some((candidate) => candidate.isCover) ? image.isCover : index === 0
+        }))
+      };
+    });
+    onAction(`Image supprimée de ${reference}.`);
+  };
+
+  const setCoverImage = (reference: string, imageId: string) => {
+    setArticleImages((current) => ({
+      ...current,
+      [reference]: (current[reference] ?? []).map((image) => ({
+        ...image,
+        isCover: image.id === imageId
+      }))
+    }));
+    onAction(`Image principale mise à jour pour ${reference}.`);
+  };
+
   if (article) {
+    const currentArticle = records.find((item) => item.reference === article.reference) ?? article;
     return (
       <ArticleDetail
-        article={article}
+        article={currentArticle}
+        images={articleImages[currentArticle.reference] ?? []}
+        onAddImage={() => addArticleImage(currentArticle.reference)}
         onAction={onAction}
         onBack={onBack}
+        onDelete={() => {
+          deleteArticle(currentArticle.reference);
+          onBack();
+        }}
+        onDeleteImage={(imageId) => deleteArticleImage(currentArticle.reference, imageId)}
+        onSave={(nextArticle) => {
+          upsertArticle(nextArticle);
+          onOpenArticle(nextArticle);
+          onAction(`Article ${nextArticle.reference} enregistré en mode mock.`);
+        }}
+        onSetCoverImage={(imageId) => setCoverImage(currentArticle.reference, imageId)}
+        key={currentArticle.reference}
       />
     );
   }
@@ -1920,7 +2055,14 @@ function ArticlesModule({
           <button onClick={() => setActionPanel(actionPanel === "import" ? null : "import")} type="button">
             ⇩ Importer des articles
           </button>
-          <button className="primary" onClick={() => setActionPanel(actionPanel === "create" ? null : "create")} type="button">
+          <button
+            className="primary"
+            onClick={() => {
+              setEditingArticle(null);
+              setActionPanel(actionPanel === "create" ? null : "create");
+            }}
+            type="button"
+          >
             + Nouvel article
           </button>
         </div>
@@ -1970,16 +2112,34 @@ function ArticlesModule({
       {actionPanel ? (
         <ArticleActionPanel
           articles={articles}
+          initialArticle={editingArticle}
           mode={actionPanel}
           onAction={onAction}
           onClose={() => setActionPanel(null)}
           onCreateArticle={(nextArticle) => {
-            setDraftArticles((current) => [nextArticle, ...current]);
+            upsertArticle(nextArticle);
             setActionPanel(null);
             onAction(`Article ${nextArticle.reference} créé en mode mock et ajouté à la liste.`);
           }}
           onImportArticles={(nextArticles) => {
-            setDraftArticles((current) => [...nextArticles, ...current]);
+            setRecords((current) => [...nextArticles, ...current]);
+            setArticleImages((current) => ({
+              ...current,
+              ...Object.fromEntries(
+                nextArticles.map((item) => [
+                  item.reference,
+                  [
+                    {
+                      id: `${item.reference}-cover`,
+                      label: item.icon,
+                      name: item.designation,
+                      caption: "Photo importée",
+                      isCover: true
+                    }
+                  ]
+                ])
+              )
+            }));
             setActionPanel(null);
             onAction(`${nextArticles.length} articles importés en mode mock après mapping des colonnes.`);
           }}
@@ -2054,8 +2214,17 @@ function ArticlesModule({
                   <td>
                     <div className="row-actions">
                       <button aria-label="Voir" onClick={() => onOpenArticle(item)} type="button">⊙</button>
-                      <button aria-label="Modifier" onClick={() => setActionPanel("create")} type="button">✎</button>
-                      <button aria-label="Plus" onClick={() => onAction(`Menu actions de ${item.reference} : dupliquer, archiver, QR, lots.`)} type="button">…</button>
+                      <button
+                        aria-label="Modifier"
+                        onClick={() => {
+                          setEditingArticle(item);
+                          setActionPanel("edit");
+                        }}
+                        type="button"
+                      >
+                        ✎
+                      </button>
+                      <button aria-label="Supprimer" onClick={() => deleteArticle(item.reference)} type="button">×</button>
                     </div>
                   </td>
                 </tr>
@@ -2078,6 +2247,10 @@ function ArticlesModule({
                     {selectedReferences.includes(item.reference) ? "Retirer" : "Sélectionner"}
                   </button>
                   <button onClick={() => onOpenArticle(item)} type="button">Ouvrir</button>
+                  <button onClick={() => {
+                    setEditingArticle(item);
+                    setActionPanel("edit");
+                  }} type="button">Modifier</button>
                 </footer>
               </article>
             ))}
@@ -2106,6 +2279,7 @@ function ArticlesModule({
 
 function ArticleActionPanel({
   articles,
+  initialArticle,
   mode,
   onAction,
   onClose,
@@ -2114,7 +2288,8 @@ function ArticleActionPanel({
   onOpenArticle
 }: {
   articles: ArticleRecord[];
-  mode: "create" | "import" | "scan" | "columns";
+  initialArticle: ArticleRecord | null;
+  mode: "create" | "edit" | "import" | "scan" | "columns";
   onAction: (message: string | null) => void;
   onClose: () => void;
   onCreateArticle: (article: ArticleRecord) => void;
@@ -2123,6 +2298,7 @@ function ArticleActionPanel({
 }) {
   const [scanValue, setScanValue] = useState("6161101234567");
   const scannedArticle = articles.find((item) => item.barcode === scanValue.trim());
+  const isEditing = mode === "edit" && initialArticle;
   const importPreview: ArticleRecord[] = [
     {
       reference: "THERMO-IR",
@@ -2157,14 +2333,14 @@ function ArticleActionPanel({
       <header>
         <div>
           <strong>
-            {mode === "create" ? "Créer / modifier un article" : mode === "import" ? "Import Articles CSV / Excel" : mode === "scan" ? "Scanner code-barres / QR" : "Colonnes & affichage"}
+            {mode === "create" ? "Créer un article" : mode === "edit" ? `Modifier ${initialArticle?.reference}` : mode === "import" ? "Import Articles CSV / Excel" : mode === "scan" ? "Scanner code-barres / QR" : "Colonnes & affichage"}
           </strong>
           <small>Workflow mock fonctionnel, prêt à connecter à l'API.</small>
         </div>
         <button onClick={onClose} type="button">×</button>
       </header>
 
-      {mode === "create" ? (
+      {(mode === "create" || mode === "edit") ? (
         <form
           className="article-form-grid"
           onSubmit={(event) => {
@@ -2187,22 +2363,30 @@ function ArticleActionPanel({
               unit: String(form.get("unit") || "Pièce"),
               averagePrice: String(form.get("averagePrice") || "0"),
               stock: String(form.get("stock") || "0"),
-              status: "Actif",
+              status: String(form.get("status") || "Actif") as ArticleStatus,
               barcode: String(form.get("barcode") || `616${Date.now().toString().slice(-10)}`),
               location: String(form.get("location") || "Dakar / NEW-01"),
               icon: reference.slice(0, 4)
             });
           }}
         >
-          <label><span>Référence *</span><input name="reference" placeholder="ex. GEL-HYDRO-500" /></label>
-          <label><span>Désignation *</span><input name="designation" placeholder="Gel hydroalcoolique 500ml" /></label>
-          <label><span>Catégorie</span><input name="category" defaultValue="Consommables" /></label>
-          <label><span>Famille</span><input name="family" defaultValue="Hygiène" /></label>
-          <label><span>Unité</span><input name="unit" defaultValue="Flacon" /></label>
-          <label><span>Prix moyen</span><input name="averagePrice" defaultValue="1 750" /></label>
-          <label><span>Stock initial</span><input name="stock" defaultValue="240" /></label>
-          <label><span>Code-barres</span><input name="barcode" defaultValue="6161113234567" /></label>
-          <label className="wide"><span>Emplacement</span><input name="location" defaultValue="Dakar / HYG-01" /></label>
+          <label><span>Référence *</span><input name="reference" defaultValue={initialArticle?.reference} placeholder="ex. GEL-HYDRO-500" readOnly={Boolean(isEditing)} /></label>
+          <label><span>Désignation *</span><input name="designation" defaultValue={initialArticle?.designation} placeholder="Gel hydroalcoolique 500ml" /></label>
+          <label><span>Catégorie</span><input name="category" defaultValue={initialArticle?.category ?? "Consommables"} /></label>
+          <label><span>Famille</span><input name="family" defaultValue={initialArticle?.family ?? "Hygiène"} /></label>
+          <label><span>Unité</span><input name="unit" defaultValue={initialArticle?.unit ?? "Flacon"} /></label>
+          <label><span>Prix moyen</span><input name="averagePrice" defaultValue={initialArticle?.averagePrice ?? "1 750"} /></label>
+          <label><span>Stock initial</span><input name="stock" defaultValue={initialArticle?.stock ?? "240"} /></label>
+          <label><span>Code-barres</span><input name="barcode" defaultValue={initialArticle?.barcode ?? "6161113234567"} /></label>
+          <label>
+            <span>Statut</span>
+            <select name="status" defaultValue={initialArticle?.status ?? "Actif"}>
+              <option>Actif</option>
+              <option>Sous stock</option>
+              <option>Rupture</option>
+            </select>
+          </label>
+          <label className="wide"><span>Emplacement</span><input name="location" defaultValue={initialArticle?.location ?? "Dakar / HYG-01"} /></label>
           <div className="article-toggle-row">
             <label><input defaultChecked type="checkbox" /> Article stockable</label>
             <label><input defaultChecked type="checkbox" /> Suivi code-barres</label>
@@ -2210,7 +2394,7 @@ function ArticleActionPanel({
           </div>
           <footer>
             <button onClick={onClose} type="button">Annuler</button>
-            <button className="primary" type="submit">Sauvegarder l'article</button>
+            <button className="primary" type="submit">{isEditing ? "Enregistrer les modifications" : "Sauvegarder l'article"}</button>
           </footer>
         </form>
       ) : null}
@@ -2280,12 +2464,24 @@ function ArticleActionPanel({
 
 function ArticleDetail({
   article,
+  images,
+  onAddImage,
   onAction,
-  onBack
+  onBack,
+  onDelete,
+  onDeleteImage,
+  onSave,
+  onSetCoverImage
 }: {
   article: ArticleRecord;
+  images: ArticleImage[];
+  onAddImage: () => void;
   onAction: (message: string | null) => void;
   onBack: () => void;
+  onDelete: () => void;
+  onDeleteImage: (imageId: string) => void;
+  onSave: (article: ArticleRecord) => void;
+  onSetCoverImage: (imageId: string) => void;
 }) {
   const articleTabs = [
     "Général",
@@ -2299,6 +2495,7 @@ function ArticleDetail({
     "Historique"
   ];
   const [activeTab, setActiveTab] = useState(articleTabs[0]);
+  const [isEditing, setIsEditing] = useState(false);
 
   return (
     <section className="article-detail-page">
@@ -2346,9 +2543,30 @@ function ArticleDetail({
           <button onClick={() => onAction("Impression étiquette prête : code-barres EAN13 et QR de traçabilité.")} type="button">▦ Imprimer étiquette</button>
           <button onClick={() => onAction("Impression POS préparée.")} type="button">▤ Imprimer POS</button>
           <button onClick={() => onAction("QR Code généré en mock pour l'article PARA-500.")} type="button">▦ Générer QR Code</button>
-          <button className="primary" onClick={() => onAction("Mode modification article ouvert.")} type="button">✎ Modifier</button>
+          <button className="danger" onClick={onDelete} type="button">Supprimer</button>
+          <button className="primary" onClick={() => setIsEditing((current) => !current)} type="button">
+            {isEditing ? "Fermer edition" : "Modifier"}
+          </button>
         </div>
       </header>
+
+      {isEditing ? (
+        <ArticleInlineEditor
+          article={article}
+          onCancel={() => setIsEditing(false)}
+          onSave={(nextArticle) => {
+            onSave(nextArticle);
+            setIsEditing(false);
+          }}
+        />
+      ) : null}
+
+      <ArticleImageManager
+        images={images}
+        onAddImage={onAddImage}
+        onDeleteImage={onDeleteImage}
+        onSetCoverImage={onSetCoverImage}
+      />
 
       <div className="article-detail-grid">
         <article className="article-tabs-card">
@@ -2365,7 +2583,7 @@ function ArticleDetail({
             ))}
           </nav>
 
-          <ArticleTabContent activeTab={activeTab} article={article} onAction={onAction} />
+          <ArticleTabContent activeTab={activeTab} article={article} images={images} onAction={onAction} />
         </article>
 
         <aside className="article-side-panel">
@@ -2437,13 +2655,116 @@ function ArticleDetail({
   );
 }
 
+function ArticleInlineEditor({
+  article,
+  onCancel,
+  onSave
+}: {
+  article: ArticleRecord;
+  onCancel: () => void;
+  onSave: (article: ArticleRecord) => void;
+}) {
+  return (
+    <form
+      className="article-inline-editor"
+      onSubmit={(event) => {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        onSave({
+          ...article,
+          designation: String(form.get("designation") || article.designation),
+          category: String(form.get("category") || article.category),
+          family: String(form.get("family") || article.family),
+          unit: String(form.get("unit") || article.unit),
+          averagePrice: String(form.get("averagePrice") || article.averagePrice),
+          stock: String(form.get("stock") || article.stock),
+          status: String(form.get("status") || article.status) as ArticleStatus,
+          barcode: String(form.get("barcode") || article.barcode),
+          location: String(form.get("location") || article.location)
+        });
+      }}
+    >
+      <header>
+        <strong>Données brutes modifiables</strong>
+        <small>Chaque champ est éditable et sauvegardé dans la session mock.</small>
+      </header>
+      <label><span>Référence</span><input defaultValue={article.reference} readOnly /></label>
+      <label><span>Désignation</span><input name="designation" defaultValue={article.designation} /></label>
+      <label><span>Catégorie</span><input name="category" defaultValue={article.category} /></label>
+      <label><span>Famille</span><input name="family" defaultValue={article.family} /></label>
+      <label><span>Unité</span><input name="unit" defaultValue={article.unit} /></label>
+      <label><span>Prix moyen</span><input name="averagePrice" defaultValue={article.averagePrice} /></label>
+      <label><span>Stock</span><input name="stock" defaultValue={article.stock} /></label>
+      <label><span>Code-barres</span><input name="barcode" defaultValue={article.barcode} /></label>
+      <label>
+        <span>Statut</span>
+        <select name="status" defaultValue={article.status}>
+          <option>Actif</option>
+          <option>Sous stock</option>
+          <option>Rupture</option>
+        </select>
+      </label>
+      <label className="wide"><span>Emplacement</span><input name="location" defaultValue={article.location} /></label>
+      <footer>
+        <button onClick={onCancel} type="button">Annuler</button>
+        <button className="primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  );
+}
+
+function ArticleImageManager({
+  images,
+  onAddImage,
+  onDeleteImage,
+  onSetCoverImage
+}: {
+  images: ArticleImage[];
+  onAddImage: () => void;
+  onDeleteImage: (imageId: string) => void;
+  onSetCoverImage: (imageId: string) => void;
+}) {
+  return (
+    <section className="article-image-manager">
+      <header>
+        <div>
+          <strong>Photos & visuels article</strong>
+          <small>Visualiser, choisir la photo principale, ajouter ou supprimer des images.</small>
+        </div>
+        <button onClick={onAddImage} type="button">+ Ajouter une image</button>
+      </header>
+      <div>
+        {images.length > 0 ? images.map((image) => (
+          <article className={image.isCover ? "cover" : ""} key={image.id}>
+            <ProductVisual label={image.label} name={image.name} />
+            <strong>{image.caption}</strong>
+            <small>{image.name}</small>
+            <footer>
+              <button onClick={() => onSetCoverImage(image.id)} type="button">
+                {image.isCover ? "Principale" : "Definir principale"}
+              </button>
+              <button onClick={() => onDeleteImage(image.id)} type="button">Supprimer</button>
+            </footer>
+          </article>
+        )) : (
+          <button className="empty-image-state" onClick={onAddImage} type="button">
+            Aucune image. Ajouter une photo article.
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ArticleTabContent({
   activeTab,
   article,
+  images,
   onAction
 }: {
   activeTab: string;
   article: ArticleRecord;
+  images: ArticleImage[];
   onAction: (message: string | null) => void;
 }) {
   if (activeTab === "Général") {
@@ -2456,21 +2777,21 @@ function ArticleTabContent({
               ["Référence interne", article.reference],
               ["Désignation", article.designation],
               ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
-              ["Catégorie", "Médicaments > Analgiques"],
+              ["Catégorie", article.category],
               ["Famille", article.family],
               ["Marque", "BIOPHARMA"],
               ["Laboratoire", "BIOPHARMA"],
               ["Statut", article.status],
-              ["Image principale", "packaging-para-500.png"]
+              ["Image principale", images.find((image) => image.isCover)?.name ?? "Aucune image"]
             ]}
           />
         </section>
         <section>
           <h2>Images</h2>
           <div className="article-images">
-            <ProductVisual label="PARA" name="Paracétamol" />
-            <ProductVisual label="TAB" name="Blister" />
-            <ProductVisual label="BOX" name="Boîte" />
+            {images.slice(0, 3).map((image) => (
+              <ProductVisual key={image.id} label={image.label} name={image.name} />
+            ))}
             <button onClick={() => onAction("Ajout d'image produit ouvert.")} type="button">＋</button>
           </div>
           <h2>Qualité fiche</h2>

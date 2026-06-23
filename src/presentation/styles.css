@@ -1184,10 +1184,21 @@ input {
 
 .erp-shell {
   grid-template-columns: 10.15rem minmax(0, 1fr);
+  transition: grid-template-columns 180ms ease;
+}
+
+.erp-shell.sidebar-collapsed {
+  grid-template-columns: 4.35rem minmax(0, 1fr);
+}
+
+.erp-shell.sidebar-expanded {
+  grid-template-columns: 10.15rem minmax(0, 1fr);
 }
 
 .erp-sidebar {
   padding: 0.9rem 0.65rem;
+  overflow: hidden;
+  transition: width 180ms ease;
 }
 
 .erp-logo {
@@ -1349,6 +1360,30 @@ input {
   white-space: nowrap;
 }
 
+.sidebar-collapsed .erp-sidebar .erp-logo strong,
+.sidebar-collapsed .erp-sidebar .erp-logo span,
+.sidebar-collapsed .erp-sidebar .erp-logo i,
+.sidebar-collapsed .erp-org-switch span:not(.org-cube),
+.sidebar-collapsed .erp-org-switch b,
+.sidebar-collapsed .erp-sidebar nav button {
+  font-size: 0;
+}
+
+.sidebar-collapsed .erp-sidebar nav button span {
+  margin: 0 auto;
+  font-size: 0.9rem;
+}
+
+.sidebar-collapsed .erp-sidebar nav button em,
+.sidebar-collapsed .quick-actions,
+.sidebar-collapsed .erp-sidebar > small {
+  display: none;
+}
+
+.sidebar-collapsed .erp-org-switch {
+  justify-content: center;
+}
+
 .topbar-actions {
   display: inline-flex;
   align-items: center;
@@ -1368,6 +1403,74 @@ input {
   border-radius: 0.35rem;
   background: #eef5ff;
   color: #0b65ff;
+}
+
+.sidebar-toggle {
+  display: inline-grid;
+  place-items: center;
+}
+
+.topbar-icon {
+  position: relative;
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.topbar-icon-bell::before {
+  position: absolute;
+  left: 0.24rem;
+  top: 0.12rem;
+  width: 0.52rem;
+  height: 0.62rem;
+  border: 2px solid currentColor;
+  border-bottom-width: 3px;
+  border-radius: 0.5rem 0.5rem 0.28rem 0.28rem;
+  content: "";
+}
+
+.topbar-icon-bell::after {
+  position: absolute;
+  left: 0.42rem;
+  bottom: 0.05rem;
+  width: 0.18rem;
+  height: 0.18rem;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.topbar-icon-mail::before {
+  position: absolute;
+  inset: 0.18rem 0.08rem;
+  border: 2px solid currentColor;
+  border-radius: 0.16rem;
+  content: "";
+}
+
+.topbar-icon-mail::after {
+  position: absolute;
+  left: 0.2rem;
+  top: 0.35rem;
+  width: 0.62rem;
+  height: 0.38rem;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
+  transform: rotate(-45deg);
+}
+
+.topbar-icon-help {
+  display: inline-grid;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.topbar-icon-help::before {
+  content: "?";
 }
 
 .topbar-actions em {
@@ -1397,6 +1500,11 @@ input {
   height: 1.75rem;
   border-radius: 50%;
   background: linear-gradient(180deg, #061a43, #0b3f8c);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 0.58rem;
+  font-weight: 950;
 }
 
 .user-menu span::after {
@@ -2160,6 +2268,12 @@ input {
   color: #ffffff;
 }
 
+.article-detail-actions button.danger {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
 .article-kpis {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -2344,6 +2458,7 @@ input {
 }
 
 .article-form-grid input,
+.article-form-grid select,
 .article-scan-panel input {
   min-height: 2rem;
   border: 1px solid #dce4ef;
@@ -2352,6 +2467,12 @@ input {
   color: #071942;
   font-size: 0.66rem;
   font-weight: 760;
+}
+
+.article-form-grid input[readonly],
+.article-inline-editor input[readonly] {
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .article-form-grid .wide,
@@ -2386,6 +2507,150 @@ input {
   border-color: #0b65ff;
   background: #0b65ff;
   color: #ffffff;
+}
+
+.article-inline-editor,
+.article-image-manager {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  background: #f8fbff;
+}
+
+.article-inline-editor {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.article-inline-editor header,
+.article-inline-editor .wide,
+.article-inline-editor footer {
+  grid-column: 1 / -1;
+}
+
+.article-inline-editor header,
+.article-image-manager header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.article-inline-editor header strong,
+.article-inline-editor header small,
+.article-image-manager header strong,
+.article-image-manager header small {
+  display: block;
+}
+
+.article-inline-editor header strong,
+.article-image-manager header strong {
+  color: #071942;
+  font-size: 0.8rem;
+}
+
+.article-inline-editor header small,
+.article-image-manager header small {
+  margin-top: 0.2rem;
+  color: #64748b;
+  font-size: 0.6rem;
+  font-weight: 760;
+}
+
+.article-inline-editor label {
+  display: grid;
+  gap: 0.25rem;
+  color: #52617c;
+  font-size: 0.58rem;
+  font-weight: 850;
+}
+
+.article-inline-editor input,
+.article-inline-editor select {
+  min-height: 2rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  padding: 0 0.65rem;
+  color: #071942;
+  font-size: 0.66rem;
+  font-weight: 760;
+}
+
+.article-inline-editor footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.article-inline-editor button,
+.article-image-manager button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.article-inline-editor button.primary {
+  border-color: #0b65ff;
+  background: #0b65ff;
+  color: #ffffff;
+}
+
+.article-image-manager > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.article-image-manager article {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem;
+  border: 1px solid #dfe6f1;
+  border-radius: 0.45rem;
+  background: #ffffff;
+}
+
+.article-image-manager article.cover {
+  border-color: #0b65ff;
+  box-shadow: 0 12px 26px rgba(11, 101, 255, 0.12);
+}
+
+.article-image-manager .product-visual {
+  min-height: 6.6rem;
+}
+
+.article-image-manager article strong,
+.article-image-manager article small {
+  display: block;
+}
+
+.article-image-manager article strong {
+  color: #071942;
+  font-size: 0.66rem;
+}
+
+.article-image-manager article small {
+  color: #64748b;
+  font-size: 0.56rem;
+  font-weight: 720;
+}
+
+.article-image-manager footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.empty-image-state {
+  grid-column: 1 / -1;
+  min-height: 5rem;
+  border-style: dashed;
 }
 
 .article-import-panel,
@@ -3553,7 +3818,7 @@ input {
 
 .article-grid-view footer {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
