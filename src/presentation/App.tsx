@@ -3195,6 +3195,91 @@ function ArticleTabContent({
   const [selectedLot, setSelectedLot] = useState("LOT-240501");
   const [documentCount, setDocumentCount] = useState(4);
   const [historyFilter, setHistoryFilter] = useState("Tous");
+  const [tabSources, setTabSources] = useState<Record<string, Array<[string, string]>>>(() => ({
+    Général: [
+      ["Référence interne", article.reference],
+      ["Désignation", article.designation],
+      ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
+      ["Catégorie", article.category],
+      ["Famille", article.family],
+      ["Marque", "BIOPHARMA"],
+      ["Laboratoire", "BIOPHARMA"],
+      ["Statut", article.status],
+      ["Image principale", images.find((image) => image.isCover)?.name ?? "Aucune image"]
+    ],
+    Logistique: [
+      ["Unité de base", "Boîte"],
+      ["Contenu de l'unité", "20 comprimés"],
+      ["Unité de vente", "Boîte (20)"],
+      ["Unité d'achat", "Carton (50 boîtes)"],
+      ["Poids net", "0,050 kg"],
+      ["Poids brut", "0,062 kg"],
+      ["Volume", "0,00012 m3"],
+      ["Dimensions", "12 x 8 x 3 cm"],
+      ["Transport", "Sec / non dangereux"],
+      ["Durée de vie", "36 mois"]
+    ],
+    Stock: [
+      ["Stock min", "500 boîtes"],
+      ["Stock max", "4 500 boîtes"],
+      ["Point commande", "850 boîtes"],
+      ["Disponible", article.stock],
+      ["Réservé", "350"],
+      ["Bloqué", "120"],
+      ["Méthode réapprovisionnement", "Automatique"]
+    ],
+    Identification: [
+      ["Code-barres EAN13", article.barcode],
+      ["Code-barres EAN14", "6161101234564"],
+      ["DataMatrix", "01061611012345671724081510LOT240501"],
+      ["QR Code", `GESTOCK://item/${article.reference}`],
+      ["SKU", `${article.reference}-BOX20`],
+      ["Code interne", "ART-2024-001256"],
+      ["Référence fabricant", "PARA500-BIO"]
+    ],
+    Fournisseurs: [
+      ["Fournisseur principal", "PHARMA CI"],
+      ["Référence fournisseur", "PARA500-BIO"],
+      ["Prix achat", "850 FCFA"],
+      ["Délai principal", "5 jours"],
+      ["Performance", "97%"],
+      ["Fournisseurs alternatifs", "MedEquip, Dakar Pharma"]
+    ],
+    Financier: [
+      ["Prix d'achat moyen", "850 FCFA"],
+      ["Prix de vente unitaire", "1 250 FCFA"],
+      ["TVA", "18%"],
+      ["Marge brute", "47,1%"],
+      ["Coût de possession", "4,8%"],
+      ["Compte stock", "311100 - Médicaments"],
+      ["Méthode valorisation", "CUMP"]
+    ],
+    "Lots & Séries": [
+      ["Lot actif", "LOT-240501"],
+      ["Quantité lot actif", "720"],
+      ["Expiration", "15/08/2024"],
+      ["Statut lot", "Actif"],
+      ["Traçabilité", "Complète"],
+      ["Emplacement", "Dakar A-12"],
+      ["Rappel produit", "Non déclenché"]
+    ],
+    Documents: [
+      ["Document principal", "Fiche technique.pdf"],
+      ["Certificat", "Certificat d'analyse.pdf"],
+      ["Notice", "Notice utilisation.pdf"],
+      ["Autorisation", "Autorisation mise sur marche.pdf"],
+      ["OCR", "Validé"],
+      ["Version courante", "v4.0"]
+    ],
+    Historique: [
+      ["Dernière modification", "31/05/2024 14:32"],
+      ["Dernier acteur", "Fatou NDIAYE"],
+      ["Dernier scan", article.barcode],
+      ["Dernier mouvement", "+ 2 500 boîtes"],
+      ["Canal principal", "Web"],
+      ["Chaînage audit", "Valide"]
+    ]
+  }));
 
   const recordTabAction = (message: string) => {
     setTabNotice(message);
@@ -3206,6 +3291,15 @@ function ArticleTabContent({
     premium: "52,8%"
   }[marginScenario];
 
+  const updateTabSource = (index: number, value: string) => {
+    setTabSources((current) => ({
+      ...current,
+      [activeTab]: (current[activeTab] ?? []).map((row, rowIndex) =>
+        rowIndex === index ? [row[0], value] : row
+      )
+    }));
+  };
+
   const tabShell = (children: ReactNode) => (
     <div className="article-tab-shell">
       {tabNotice ? (
@@ -3215,6 +3309,12 @@ function ArticleTabContent({
         </p>
       ) : null}
       {children}
+      <ArticleTabSourceEditor
+        activeTab={activeTab}
+        rows={tabSources[activeTab] ?? []}
+        onChange={updateTabSource}
+        onSave={() => recordTabAction(`Données source de l'onglet ${activeTab} sauvegardées en mode mock.`)}
+      />
     </div>
   );
 
@@ -3224,17 +3324,7 @@ function ArticleTabContent({
         <section>
           <h2>Informations générales</h2>
           <InfoRows
-            rows={[
-              ["Référence interne", article.reference],
-              ["Désignation", article.designation],
-              ["Description détaillée", "Analgésique et antipyrétique indiqué dans le traitement symptomatique des douleurs légères à modérées et/ou de la fièvre."],
-              ["Catégorie", article.category],
-              ["Famille", article.family],
-              ["Marque", "BIOPHARMA"],
-              ["Laboratoire", "BIOPHARMA"],
-              ["Statut", article.status],
-              ["Image principale", images.find((image) => image.isCover)?.name ?? "Aucune image"]
-            ]}
+            rows={tabSources.Général}
           />
           <div className="article-tab-toolbar">
             <button onClick={() => recordTabAction("Fiche article contrôlée : libellés, catégorie, famille et visuel principal validés.")} type="button">
@@ -3274,30 +3364,14 @@ function ArticleTabContent({
         <section>
           <h2>Conditionnement & dimensions</h2>
           <InfoRows
-            rows={[
-              ["Unité de base", "Boîte"],
-              ["Contenu de l'unité", "20 comprimés"],
-              ["Unité de vente", "Boîte (20)"],
-              ["Unité d'achat", "Carton (50 boîtes)"],
-              ["Poids net", "0,050 kg"],
-              ["Poids brut", "0,062 kg"],
-              ["Volume", "0,00012 m3"],
-              ["Dimensions", "12 x 8 x 3 cm"]
-            ]}
+            rows={tabSources.Logistique.slice(0, 8)}
           />
         </section>
         <section>
           <h2>Palettes, conservation & transport</h2>
           <InfoRows
             rows={[
-              ["Conditionnement", "Boîte en carton"],
-              ["Cartons par palette", "80"],
-              ["Boîtes par palette", "4 000"],
-              ["Température conservation", "Ambiante"],
-              ["Plage température", "15°C - 30°C"],
-              ["Transport", "Sec / non dangereux"],
-              ["Fragilité", "Standard"],
-              ["Durée de vie", "36 mois"],
+              ...tabSources.Logistique.slice(8),
               ["Validation logistique", logisticsValidated ? "Validee" : "A controler"]
             ]}
           />
@@ -3366,15 +3440,7 @@ function ArticleTabContent({
         <section>
           <h2>Codes & identifiants</h2>
           <InfoRows
-            rows={[
-              ["Code-barres (EAN13)", article.barcode],
-              ["Code-barres (EAN14)", "6161101234564"],
-              ["DataMatrix", "01061611012345671724081510LOT240501"],
-              ["QR Code", "GESTOCK://item/PARA-500"],
-              ["SKU", "PARA500-BOX20"],
-              ["Code interne", "ART-2024-001256"],
-              ["Référence fabricant", "PARA500-BIO"]
-            ]}
+            rows={tabSources.Identification}
           />
           <div className="article-code-switcher">
             {["EAN13", "QR Code", "DataMatrix", "SKU"].map((codeType) => (
@@ -3460,11 +3526,11 @@ function ArticleTabContent({
           </div>
           <InfoRows
             rows={[
-              ["Prix d'achat moyen", "850 FCFA"],
+              ...tabSources.Financier.slice(0, 1),
               ["Prix de vente unitaire", marginScenario === "promo" ? "1 160 FCFA" : marginScenario === "premium" ? "1 340 FCFA" : "1 250 FCFA"],
-              ["TVA", "18%"],
+              ["TVA", tabSources.Financier[2]?.[1] ?? "18%"],
               ["Marge brute", marginByScenario],
-              ["Coût de possession", "4,8%"],
+              ["Coût de possession", tabSources.Financier[4]?.[1] ?? "4,8%"],
               ["Valorisation stock", "3 125 000 FCFA"]
             ]}
           />
@@ -3473,10 +3539,10 @@ function ArticleTabContent({
           <h2>Comptabilité</h2>
           <InfoRows
             rows={[
-              ["Compte stock", "311100 - Médicaments"],
+              [tabSources.Financier[5]?.[0] ?? "Compte stock", tabSources.Financier[5]?.[1] ?? "311100 - Médicaments"],
               ["Compte achat", "601200 - Achats santé"],
               ["Compte vente", "701100 - Ventes articles"],
-              ["Méthode valorisation", "CUMP"],
+              [tabSources.Financier[6]?.[0] ?? "Méthode valorisation", tabSources.Financier[6]?.[1] ?? "CUMP"],
               ["Devise", "XOF"],
               ["Centre de coût", "Supply Santé"]
             ]}
@@ -3622,6 +3688,52 @@ function ArticleMiniTable({ columns, rows }: { columns: string[]; rows: string[]
         ))}
       </tbody>
     </table>
+  );
+}
+
+function ArticleTabSourceEditor({
+  activeTab,
+  onChange,
+  onSave,
+  rows
+}: {
+  activeTab: string;
+  onChange: (index: number, value: string) => void;
+  onSave: () => void;
+  rows: Array<[string, string]>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <section className="article-tab-source-editor">
+      <header>
+        <div>
+          <strong>Données source - {activeTab}</strong>
+          <small>Ces champs représentent les données brutes qui alimentent l'onglet courant.</small>
+        </div>
+        <button onClick={() => setExpanded((current) => !current)} type="button">
+          {expanded ? "Réduire" : "Modifier les données"}
+        </button>
+      </header>
+
+      {expanded ? (
+        <>
+          <div>
+            {rows.map(([label, value], index) => (
+              <label key={`${activeTab}-${label}`}>
+                <span>{label}</span>
+                <input onChange={(event) => onChange(index, event.target.value)} value={value} />
+              </label>
+            ))}
+          </div>
+          <footer>
+            <button onClick={onSave} type="button">Enregistrer les données de l'onglet</button>
+          </footer>
+        </>
+      ) : (
+        <p>{rows.length} champs configurables pour cet onglet.</p>
+      )}
+    </section>
   );
 }
 

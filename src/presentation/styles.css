@@ -3446,6 +3446,82 @@ input {
   font-weight: 850;
 }
 
+.article-tab-source-editor {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0 0.82rem 0.82rem;
+  padding: 0.75rem;
+  border: 1px solid #dbeafe;
+  border-radius: 0.45rem;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+}
+
+.article-tab-source-editor header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.article-tab-source-editor strong,
+.article-tab-source-editor small {
+  display: block;
+}
+
+.article-tab-source-editor strong {
+  color: #071942;
+  font-size: 0.7rem;
+}
+
+.article-tab-source-editor small,
+.article-tab-source-editor p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 760;
+}
+
+.article-tab-source-editor > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.article-tab-source-editor label {
+  display: grid;
+  gap: 0.25rem;
+  color: #52617c;
+  font-size: 0.56rem;
+  font-weight: 850;
+}
+
+.article-tab-source-editor input {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  padding: 0 0.55rem;
+  color: #071942;
+  font-size: 0.62rem;
+  font-weight: 760;
+}
+
+.article-tab-source-editor button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+  padding: 0 0.65rem;
+}
+
+.article-tab-source-editor footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .article-info-columns h2,
 .side-info-card > strong,
 .quick-article-actions > strong,
