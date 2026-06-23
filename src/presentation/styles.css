@@ -2637,6 +2637,91 @@ input {
   gap: 0.65rem;
 }
 
+.article-closure-panel {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.85rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.article-closure-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.article-closure-panel strong,
+.article-closure-panel p {
+  margin: 0;
+}
+
+.article-closure-panel header strong {
+  display: block;
+  color: #071942;
+  font-size: 0.82rem;
+}
+
+.article-closure-panel header p {
+  margin-top: 0.26rem;
+  color: #64748b;
+  font-size: 0.62rem;
+  font-weight: 760;
+}
+
+.article-closure-panel header button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+  padding: 0 0.72rem;
+}
+
+.article-closure-panel > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.article-closure-panel article {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.58rem;
+  border: 1px solid #e5ebf4;
+  border-radius: 0.4rem;
+  background: #ffffff;
+}
+
+.article-closure-panel article span {
+  width: fit-content;
+  padding: 0.12rem 0.38rem;
+  border-radius: 99px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.5rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.article-closure-panel article strong {
+  color: #071942;
+  font-size: 0.64rem;
+}
+
+.article-closure-panel article small {
+  color: #64748b;
+  font-size: 0.54rem;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
 .article-kpis article,
 .article-kpis button,
 .article-list-card,

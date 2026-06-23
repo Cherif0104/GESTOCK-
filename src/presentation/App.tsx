@@ -2093,6 +2093,8 @@ function ArticlesModule({
         </div>
       </header>
 
+      <ArticleClosurePanel onAction={onAction} />
+
       <section className="article-kpis">
         {articleKpis.map(([value, label, icon, tone, nextStatus]) => (
           <button
@@ -2346,6 +2348,42 @@ function buildArticleFormState(initialArticle: ArticleRecord | null) {
     stock: initialArticle?.stock ?? "2 500",
     averagePrice: initialArticle?.averagePrice ?? "1 250"
   };
+}
+
+function ArticleClosurePanel({ onAction }: { onAction: (message: string | null) => void }) {
+  const coverage = [
+    ["Liste Articles", "Recherche, filtres, vues table/grille, sélection, actions ligne", "Clos"],
+    ["Création / modification", "Formulaire complet, listes enrichissables, onglets configurables", "Clos"],
+    ["Fiche détail", "Données brutes, photos, suppression, sauvegarde, aperçu stock", "Clos"],
+    ["Onglets métier", "Général, Logistique, Stock, Identification, Fournisseurs, Financier, Lots, Documents, Historique", "Clos"],
+    ["Import", "Mapping CSV/Excel, prévisualisation, import mock dans la liste", "Clos"],
+    ["Scan & étiquettes", "Scan EAN/QR, génération codes, impression étiquette/POS mock", "Clos"],
+    ["Documents & OCR", "Versions, ajout document, OCR, signature, archivage mock", "Clos"],
+    ["Audit trail", "Historique filtrable, export audit, chaînage simulé", "Clos"]
+  ];
+
+  return (
+    <section className="article-closure-panel">
+      <header>
+        <div>
+          <strong>Audit de clôture Articles V1</strong>
+          <p>Module de référence prêt à servir de modèle pour Catalogue, Stock, Entrées, Sorties et les prochains écrans ERP.</p>
+        </div>
+        <button onClick={() => onAction("Audit Articles V1 consulté : couverture fonctionnelle complète en mock.")} type="button">
+          Voir synthèse
+        </button>
+      </header>
+      <div>
+        {coverage.map(([title, detail, status]) => (
+          <article key={title}>
+            <span>{status}</span>
+            <strong>{title}</strong>
+            <small>{detail}</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function ArticleFormWorkspace({
