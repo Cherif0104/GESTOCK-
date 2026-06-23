@@ -90,44 +90,6 @@ const navigationItems = [
   "Paramètres"
 ];
 
-const dashboardKpis = [
-  {
-    label: "Valeur totale du stock",
-    value: "1 248 540 000",
-    trend: "+ 12,5% vs mois précédent",
-    icon: "▤",
-    tone: "positive"
-  },
-  {
-    label: "Taux de disponibilité",
-    value: "92,4%",
-    trend: "+ 4,2% vs mois précédent",
-    icon: "⌁",
-    tone: "positive"
-  },
-  {
-    label: "Ruptures de stock",
-    value: "56",
-    trend: "- 8,3% vs mois précédent",
-    icon: "△",
-    tone: "danger"
-  },
-  {
-    label: "Commandes ouvertes",
-    value: "32",
-    trend: "12,5M FCFA",
-    icon: "□",
-    tone: "neutral"
-  },
-  {
-    label: "Articles actifs",
-    value: "2 356",
-    trend: "+ 5,7% vs mois précédent",
-    icon: "◇",
-    tone: "positive"
-  }
-];
-
 const recentMovements = [
   ["31/05/2024", "Réception", "REC-00045", "Paracétamol 500mg", "Entrepôt Dakar", "+ 2 500", "Amadou Diop"],
   ["31/05/2024", "Sortie", "SOR-00123", "Gants médicaux", "Entrepôt Thiès", "- 1 000", "Fatou Ndiaye"],
@@ -1353,7 +1315,7 @@ function DashboardScreen({
               </header>
 
               {isDashboard ? (
-                <DashboardContent model={model} />
+                <DashboardContent model={model} onAction={onAction} />
               ) : (
                 <ModuleWorkbench
                   moduleName={activeNav}
@@ -1369,25 +1331,182 @@ function DashboardScreen({
   );
 }
 
-function DashboardContent({ model }: { model: GestockViewModel }) {
+function formatCompactCurrency(value: number) {
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(2).replace(".", ",")} Md`;
+  }
+
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1).replace(".", ",")}M`;
+  }
+
+  return value.toLocaleString("fr-FR");
+}
+
+function percentChange(current: number, previous: number) {
+  if (previous === 0) return 0;
+  return ((current - previous) / previous) * 100;
+}
+
+function formatSignedPercent(value: number) {
+  const sign = value >= 0 ? "+" : "";
+  return `${sign}${value.toFixed(1).replace(".", ",")}%`;
+}
+
+function DashboardContent({
+  model,
+  onAction
+}: {
+  model: GestockViewModel;
+  onAction: (message: string | null) => void;
+}) {
+  const ranges = ["7 jours", "30 derniers jours", "Trimestre", "Année"];
+  const [activeKpiId, setActiveKpiId] = useState("stock-value");
+  const [activeRange, setActiveRange] = useState("30 derniers jours");
+  const [activeCategory, setActiveCategory] = useState("Matières premières");
+  const [handledAlerts, setHandledAlerts] = useState<string[]>([]);
+
+  const dashboardFacts = {
+    stockValue: 1_248_540_000,
+    previousStockValue: 1_109_812_000,
+    availableUnits: 2738,
+    totalUnits: 2964,
+    stockoutReferences: 56,
+    previousStockoutReferences: 61,
+    openOrders: 32,
+    openOrdersValue: 12_500_000,
+    activeArticles: 2356,
+    previousActiveArticles: 2229
+  };
+
+  const computedKpis = [
+    {
+      id: "stock-value",
+      label: "Valeur totale du stock",
+      value: formatCompactCurrency(dashboardFacts.stockValue),
+      trend: `${formatSignedPercent(percentChange(dashboardFacts.stockValue, dashboardFacts.previousStockValue))} vs mois précédent`,
+      icon: "▤",
+      tone: "positive",
+      formula: "Somme des quantités disponibles x coût moyen pondéré par article et entrepôt.",
+      details: [
+        ["Dakar", "456 780 000 FCFA"],
+        ["Thiès", "234 560 000 FCFA"],
+        ["Kaolack", "198 430 000 FCFA"]
+      ]
+    },
+    {
+      id: "availability",
+      label: "Taux de disponibilité",
+      value: `${((dashboardFacts.availableUnits / dashboardFacts.totalUnits) * 100).toFixed(1).replace(".", ",")}%`,
+      trend: "+ 4,2% vs mois précédent",
+      icon: "⌁",
+      tone: "positive",
+      formula: "Articles disponibles / articles demandés sur la période active.",
+      details: [
+        ["Disponible", `${dashboardFacts.availableUnits} unités`],
+        ["Total demandé", `${dashboardFacts.totalUnits} unités`],
+        ["Écart", `${dashboardFacts.totalUnits - dashboardFacts.availableUnits} unités`]
+      ]
+    },
+    {
+      id: "stockouts",
+      label: "Ruptures de stock",
+      value: String(dashboardFacts.stockoutReferences),
+      trend: `${dashboardFacts.previousStockoutReferences - dashboardFacts.stockoutReferences} références récupérées`,
+      icon: "△",
+      tone: "danger",
+      formula: "Références actives avec stock disponible inférieur ou égal à zéro.",
+      details: [
+        ["Riz 25kg", "0 unité"],
+        ["Réactifs QC", "0 unité"],
+        ["Pièces critiques", "4 références"]
+      ]
+    },
+    {
+      id: "orders",
+      label: "Commandes ouvertes",
+      value: String(dashboardFacts.openOrders),
+      trend: `${formatCompactCurrency(dashboardFacts.openOrdersValue)} engagés`,
+      icon: "□",
+      tone: "neutral",
+      formula: "Commandes fournisseurs non clôturées, tous entrepôts actifs confondus.",
+      details: [
+        ["Approuvées", "14 commandes"],
+        ["Envoyées", "11 commandes"],
+        ["En retard", "7 commandes"]
+      ]
+    },
+    {
+      id: "active-items",
+      label: "Articles actifs",
+      value: dashboardFacts.activeArticles.toLocaleString("fr-FR"),
+      trend: `${formatSignedPercent(percentChange(dashboardFacts.activeArticles, dashboardFacts.previousActiveArticles))} vs mois précédent`,
+      icon: "◇",
+      tone: "positive",
+      formula: "Articles opérationnels actifs, hors brouillons catalogue et articles archivés.",
+      details: [
+        ["Médicaments", "624 articles"],
+        ["Consommables", "518 articles"],
+        ["Matériaux", "402 articles"]
+      ]
+    }
+  ];
+
+  const selectedKpi = computedKpis.find((kpi) => kpi.id === activeKpiId) ?? computedKpis[0];
+  const categoryDistribution = [
+    ["Matières premières", "32%", "1"],
+    ["Produits finis", "28%", "2"],
+    ["Consommables", "20%", "3"],
+    ["Pièces de rechange", "12%", "4"],
+    ["Autres", "8%", "5"]
+  ];
+
+  const nextRange = () => {
+    const currentIndex = ranges.indexOf(activeRange);
+    const next = ranges[(currentIndex + 1) % ranges.length];
+    setActiveRange(next);
+    onAction(`Période dashboard changée : ${next}. Les KPI sont recalculés en simulation.`);
+  };
+
   return (
     <>
       <section className="kpi-grid">
-        {dashboardKpis.map((kpi) => (
-          <article className="kpi-card" key={kpi.label}>
+        {computedKpis.map((kpi) => (
+          <button
+            className={`kpi-card ${kpi.id === activeKpiId ? "active" : ""}`}
+            key={kpi.id}
+            onClick={() => setActiveKpiId(kpi.id)}
+            type="button"
+          >
             <small>{kpi.label}</small>
             <strong>{kpi.value}</strong>
             <span className={kpi.tone}>{kpi.trend}</span>
             <i>{kpi.icon}</i>
-          </article>
+          </button>
         ))}
+      </section>
+
+      <section className="dashboard-insight-panel">
+        <div>
+          <small>KPI actif</small>
+          <strong>{selectedKpi.label}</strong>
+          <p>{selectedKpi.formula}</p>
+        </div>
+        <div className="insight-breakdown">
+          {selectedKpi.details.map(([label, value]) => (
+            <span key={label}>
+              <small>{label}</small>
+              <b>{value}</b>
+            </span>
+          ))}
+        </div>
       </section>
 
       <section className="analytics-grid">
         <article className="chart-card wide">
           <header>
             <strong>Évolution de la valeur du stock</strong>
-            <button type="button">30 derniers jours ⌄</button>
+            <button onClick={nextRange} type="button">{activeRange} ⌄</button>
           </header>
           <div className="line-chart">
             <span style={{ left: "4%", bottom: "26%" }} />
@@ -1402,6 +1521,9 @@ function DashboardContent({ model }: { model: GestockViewModel }) {
             <span style={{ left: "89%", bottom: "88%" }} />
             <span style={{ left: "97%", bottom: "100%" }} />
           </div>
+          <p className="chart-caption">
+            Série calculée depuis les valorisations journalières simulées. Point haut : 1,31 Md FCFA.
+          </p>
         </article>
 
         <article className="chart-card donut-card">
@@ -1409,36 +1531,68 @@ function DashboardContent({ model }: { model: GestockViewModel }) {
           <div className="donut-row">
             <div className="donut" />
             <ul>
-              {["Matières premières 32%", "Produits finis 28%", "Consommables 20%", "Pièces de rechange 12%", "Autres 8%"].map((item) => (
-                <li key={item}>{item}</li>
+              {categoryDistribution.map(([label, percent, colorIndex]) => (
+                <li key={label}>
+                  <button
+                    className={activeCategory === label ? "active" : ""}
+                    onClick={() => setActiveCategory(label)}
+                    type="button"
+                  >
+                    <span className={`category-dot category-dot-${colorIndex}`} />
+                    {label}
+                    <b>{percent}</b>
+                  </button>
+                </li>
               ))}
             </ul>
           </div>
-          <small>Total : 1 248 540 000 FCFA</small>
+          <small>Catégorie sélectionnée : {activeCategory}</small>
         </article>
 
         <article className="chart-card alerts-card">
           <strong>Alertes critiques</strong>
           {model.alerts.slice(0, 4).map((alert, index) => (
-            <p key={alert.id}>
+            <p className={handledAlerts.includes(alert.id) ? "handled" : ""} key={alert.id}>
               <span>{["△", "⚠", "◇", "↻"][index]}</span>
               {alert.title}
               <b>{[12, 28, 9, 7][index]}</b>
+              <button
+                onClick={() => {
+                  setHandledAlerts((current) =>
+                    current.includes(alert.id) ? current : [...current, alert.id]
+                  );
+                  onAction(`Alerte prise en charge : ${alert.title}`);
+                }}
+                type="button"
+              >
+                Traiter
+              </button>
             </p>
           ))}
-          <button type="button">Voir toutes les alertes</button>
+          <button onClick={() => onAction("Centre d'alertes ouvert depuis le dashboard.")} type="button">Voir toutes les alertes</button>
         </article>
       </section>
 
       <section className="tables-grid">
-        <DataTable
+        <InteractiveDataTable
           className="large"
           columns={["Date", "Type", "Référence", "Article", "Entrepôt", "Quantité", "Utilisateur"]}
+          onAction={onAction}
           rows={recentMovements}
           title="Mouvements récents"
         />
-        <DataTable columns={["Entrepôt", "Valeur (FCFA)", "Disponibilité"]} rows={warehouseStock} title="Stock par entrepôt" />
-        <DataTable columns={["Article", "Valeur (FCFA)", "% Total"]} rows={topArticles} title="Top 5 articles par valeur" />
+        <InteractiveDataTable
+          columns={["Entrepôt", "Valeur (FCFA)", "Disponibilité"]}
+          onAction={onAction}
+          rows={warehouseStock}
+          title="Stock par entrepôt"
+        />
+        <InteractiveDataTable
+          columns={["Article", "Valeur (FCFA)", "% Total"]}
+          onAction={onAction}
+          rows={topArticles}
+          title="Top 5 articles par valeur"
+        />
       </section>
 
       <section className="indicator-strip">
@@ -1449,12 +1603,12 @@ function DashboardContent({ model }: { model: GestockViewModel }) {
           ["Taux d'occupation", "78,3%", ""],
           ["Coût de possession", "4,8%", "de la valeur du stock"]
         ].map(([label, value, suffix]) => (
-          <article key={label}>
+          <button key={label} onClick={() => onAction(`Analyse ${label} ouverte en drill-down mock.`)} type="button">
             <small>{label}</small>
             <strong>{value}</strong>
             <span>{suffix}</span>
             <em>+ 0,6 vs mois précédent</em>
-          </article>
+          </button>
         ))}
       </section>
     </>
@@ -2436,6 +2590,53 @@ function DataTable({
         </tbody>
       </table>
       <button type="button">Voir tous les éléments</button>
+    </article>
+  );
+}
+
+function InteractiveDataTable({
+  className = "",
+  columns,
+  onAction,
+  rows,
+  title
+}: {
+  className?: string;
+  columns: string[];
+  onAction: (message: string | null) => void;
+  rows: string[][];
+  title: string;
+}) {
+  return (
+    <article className={`table-card ${className}`}>
+      <strong>{title}</strong>
+      <table>
+        <thead>
+          <tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.join("-")}>
+              {row.map((cell, index) => (
+                <td key={`${cell}-${index}`}>
+                  {index === 0 ? (
+                    <button
+                      className="table-link"
+                      onClick={() => onAction(`${title} : détail ${cell} ouvert en drill-down mock.`)}
+                      type="button"
+                    >
+                      {cell}
+                    </button>
+                  ) : (
+                    cell
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button onClick={() => onAction(`${title} : vue complète ouverte.`)} type="button">Voir tous les éléments</button>
     </article>
   );
 }

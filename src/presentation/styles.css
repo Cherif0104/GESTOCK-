@@ -1420,6 +1420,13 @@ input {
   position: relative;
   min-height: 6.9rem;
   padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kpi-card.active {
+  border-color: #0b65ff;
+  box-shadow: 0 14px 30px rgba(11, 101, 255, 0.14);
 }
 
 .kpi-card small {
@@ -1467,6 +1474,65 @@ input {
   font-style: normal;
 }
 
+.dashboard-insight-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 2fr);
+  gap: 0.8rem;
+  margin-top: 0.8rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.45rem;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-insight-panel small,
+.dashboard-insight-panel strong,
+.dashboard-insight-panel p {
+  display: block;
+  margin: 0;
+}
+
+.dashboard-insight-panel small {
+  color: #64748b;
+  font-size: 0.58rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.dashboard-insight-panel strong {
+  margin-top: 0.22rem;
+  color: #071942;
+  font-size: 0.8rem;
+}
+
+.dashboard-insight-panel p {
+  margin-top: 0.35rem;
+  color: #52617c;
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.insight-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.insight-breakdown span {
+  padding: 0.55rem;
+  border: 1px solid #e5ebf4;
+  border-radius: 0.35rem;
+  background: #ffffff;
+}
+
+.insight-breakdown b {
+  display: block;
+  margin-top: 0.25rem;
+  color: #0b65ff;
+  font-size: 0.7rem;
+}
+
 .analytics-grid {
   display: grid;
   grid-template-columns: 2fr 1.65fr 1.35fr;
@@ -1502,6 +1568,13 @@ input {
   cursor: pointer;
   font-size: 0.62rem;
   font-weight: 850;
+}
+
+.chart-caption {
+  margin: 0.4rem 0 0;
+  color: #64748b;
+  font-size: 0.6rem;
+  font-weight: 700;
 }
 
 .line-chart {
@@ -1576,14 +1649,47 @@ input {
   font-weight: 760;
 }
 
-.donut-card li::before {
+.donut-card li button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.45rem;
+  border: 0;
+  background: transparent;
+  color: #33415f;
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 760;
+  text-align: left;
+}
+
+.donut-card li button.active {
+  color: #0b65ff;
+}
+
+.category-dot {
   display: inline-block;
   width: 0.42rem;
   height: 0.42rem;
-  margin-right: 0.5rem;
   border-radius: 50%;
   background: #1463ff;
-  content: "";
+}
+
+.category-dot-2 {
+  background: #14a75a;
+}
+
+.category-dot-3 {
+  background: #ffb703;
+}
+
+.category-dot-4 {
+  background: #f97316;
+}
+
+.category-dot-5 {
+  background: #8b5cf6;
 }
 
 .donut-card small {
@@ -1601,7 +1707,7 @@ input {
 
 .alerts-card p {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr auto auto;
   align-items: center;
   gap: 0.55rem;
   margin: 0;
@@ -1610,12 +1716,22 @@ input {
   font-weight: 760;
 }
 
+.alerts-card p.handled {
+  opacity: 0.58;
+}
+
 .alerts-card span {
   color: #ef4444;
 }
 
 .alerts-card b {
   color: #071942;
+}
+
+.alerts-card p button {
+  padding: 0;
+  color: #0b65ff;
+  font-size: 0.58rem;
 }
 
 .tables-grid {
@@ -1655,6 +1771,17 @@ input {
   font-weight: 720;
 }
 
+.table-link {
+  border: 0;
+  background: transparent;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 900;
+  padding: 0;
+  text-align: left;
+}
+
 .table-card button {
   margin-top: 0.6rem;
 }
@@ -1667,13 +1794,22 @@ input {
   padding: 0.9rem;
 }
 
-.indicator-strip article {
+.indicator-strip article,
+.indicator-strip button {
   display: grid;
   gap: 0.25rem;
   border-right: 1px solid #e2e8f0;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
 }
 
-.indicator-strip article:last-child {
+.indicator-strip article:last-child,
+.indicator-strip button:last-child {
   border-right: 0;
 }
 
