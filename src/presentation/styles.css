@@ -4124,7 +4124,8 @@ input {
 }
 
 .catalogue-page,
-.catalogue-detail-page {
+.catalogue-detail-page,
+.catalogue-form-page {
   display: grid;
   gap: 0.85rem;
 }
@@ -4194,6 +4195,80 @@ input {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 0.8rem;
+}
+
+.catalogue-governance-panel {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.85rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, #f8fbff, #ffffff);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.catalogue-governance-panel header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.catalogue-governance-panel strong,
+.catalogue-governance-panel p {
+  margin: 0;
+}
+
+.catalogue-governance-panel header strong {
+  display: block;
+  color: #071942;
+  font-size: 0.82rem;
+}
+
+.catalogue-governance-panel header p {
+  margin-top: 0.26rem;
+  color: #64748b;
+  font-size: 0.62rem;
+  font-weight: 760;
+}
+
+.catalogue-governance-panel header button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+  padding: 0 0.72rem;
+}
+
+.catalogue-governance-panel > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.catalogue-governance-panel article {
+  display: grid;
+  gap: 0.22rem;
+  padding: 0.58rem;
+  border: 1px solid #e5ebf4;
+  border-radius: 0.4rem;
+  background: #ffffff;
+}
+
+.catalogue-governance-panel article strong {
+  color: #071942;
+  font-size: 0.64rem;
+}
+
+.catalogue-governance-panel article small {
+  color: #64748b;
+  font-size: 0.54rem;
+  font-weight: 720;
+  line-height: 1.35;
 }
 
 .catalogue-kpis article,
@@ -4341,6 +4416,10 @@ input {
 .catalogue-table td {
   color: #233557;
   font-weight: 760;
+}
+
+.catalogue-table tr.selected {
+  background: #f0f7ff;
 }
 
 .catalogue-code {
@@ -4497,13 +4576,51 @@ input {
   gap: 0.85rem;
 }
 
+.catalogue-active-submodule,
 .catalogue-tree-card,
 .catalogue-reference-card,
 .catalogue-warning {
   padding: 0.95rem;
 }
 
+.catalogue-active-submodule {
+  display: grid;
+  gap: 0.42rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.45rem;
+  background: #f8fbff;
+}
+
+.catalogue-active-submodule h2,
+.catalogue-active-submodule p {
+  margin: 0;
+}
+
+.catalogue-active-submodule h2 {
+  color: #071942;
+  font-size: 0.86rem;
+}
+
+.catalogue-active-submodule p {
+  color: #64748b;
+  font-size: 0.6rem;
+  font-weight: 760;
+  line-height: 1.45;
+}
+
+.catalogue-active-submodule button {
+  min-height: 1.9rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.35rem;
+  background: #ffffff;
+  color: #0b65ff;
+  cursor: pointer;
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
 .catalogue-tree-card strong,
+.catalogue-active-submodule > strong,
 .catalogue-reference-card > strong,
 .catalogue-warning strong {
   color: #071942;

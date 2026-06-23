@@ -3950,12 +3950,78 @@ function CatalogueModule({
   onOpenProduct: (product: CatalogProduct) => void;
   product: CatalogProduct | null;
 }) {
+  const [records, setRecords] = useState<CatalogProduct[]>(catalogProducts);
+  const [query, setQuery] = useState("");
+  const [activeSubmodule, setActiveSubmodule] = useState(catalogSubmodules[0]);
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [formMode, setFormMode] = useState<"create" | "edit" | null>(null);
+  const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+  const filteredProducts = records.filter((item) =>
+    [item.code, item.name, item.family, item.brand, item.type, item.classification]
+      .join(" ")
+      .toLowerCase()
+      .includes(query.trim().toLowerCase())
+  );
+  const selectedProducts = records.filter((item) => selectedCodes.includes(item.code));
+  const upsertProduct = (nextProduct: CatalogProduct) => {
+    setRecords((current) =>
+      current.some((item) => item.code === nextProduct.code)
+        ? current.map((item) => item.code === nextProduct.code ? nextProduct : item)
+        : [nextProduct, ...current]
+    );
+  };
+  const deleteProduct = (code: string) => {
+    setRecords((current) => current.filter((item) => item.code !== code));
+    setSelectedCodes((current) => current.filter((item) => item !== code));
+    onAction(`Produit maître ${code} supprimé du Catalogue mock.`);
+  };
+  const toggleCode = (code: string) => {
+    setSelectedCodes((current) =>
+      current.includes(code) ? current.filter((item) => item !== code) : [...current, code]
+    );
+  };
+  const toggleAllVisible = () => {
+    const visibleCodes = filteredProducts.map((item) => item.code);
+    const allVisibleSelected = visibleCodes.every((code) => selectedCodes.includes(code));
+    setSelectedCodes((current) =>
+      allVisibleSelected
+        ? current.filter((code) => !visibleCodes.includes(code))
+        : Array.from(new Set([...current, ...visibleCodes]))
+    );
+  };
+
   if (product) {
+    const currentProduct = records.find((item) => item.code === product.code) ?? product;
     return (
       <CatalogProductDetail
         onAction={onAction}
         onBack={onBack}
-        product={product}
+        product={currentProduct}
+      />
+    );
+  }
+
+  if (formMode) {
+    return (
+      <CatalogueFormWorkspace
+        initialProduct={editingProduct}
+        mode={formMode}
+        onCancel={() => {
+          setFormMode(null);
+          setEditingProduct(null);
+        }}
+        onSave={(nextProduct) => {
+          upsertProduct(nextProduct);
+          setFormMode(null);
+          setEditingProduct(null);
+          onAction(`Produit maître ${nextProduct.code} enregistré dans le Catalogue mock.`);
+        }}
+        onSaveAndNew={(nextProduct) => {
+          upsertProduct(nextProduct);
+          setEditingProduct(null);
+          setFormMode("create");
+          onAction(`Produit maître ${nextProduct.code} enregistré. Nouveau formulaire Catalogue prêt.`);
+        }}
       />
     );
   }
@@ -3971,16 +4037,25 @@ function CatalogueModule({
           <button onClick={() => onAction("Import référentiel Catalogue ouvert : produits maîtres, attributs, familles, marques et classifications.")} type="button">
             ⇩ Importer référentiel
           </button>
-          <button className="primary" onClick={() => onAction("Assistant Nouveau produit maître prêt : modèle, attributs, variantes, documents et classifications.")} type="button">
+          <button
+            className="primary"
+            onClick={() => {
+              setEditingProduct(null);
+              setFormMode("create");
+            }}
+            type="button"
+          >
             + Nouveau produit maître
           </button>
         </div>
       </header>
 
+      <CatalogueGovernancePanel onAction={onAction} />
+
       <section className="catalogue-kpis">
         {[
-          ["1 284", "Produits maîtres", "▧", "blue"],
-          ["342", "Variantes", "◇", "green"],
+          [String(records.length), "Produits maîtres", "▧", "blue"],
+          [String(records.reduce((total, item) => total + item.variants, 0)), "Variantes", "◇", "green"],
           ["86", "Catégories", "☷", "purple"],
           ["24", "Modèles d'articles", "▣", "orange"],
           ["97,8%", "Qualité référentiel", "♢", "green"]
@@ -3994,11 +4069,11 @@ function CatalogueModule({
       </section>
 
       <nav className="catalogue-subnav">
-        {catalogSubmodules.map((submodule, index) => (
+        {catalogSubmodules.map((submodule) => (
           <button
-            className={index === 0 ? "active" : ""}
+            className={submodule === activeSubmodule ? "active" : ""}
             key={submodule}
-            onClick={() => onAction(`${submodule} prêt : écran dédié à générer dans le module Catalogue.`)}
+            onClick={() => setActiveSubmodule(submodule)}
             type="button"
           >
             {submodule}
@@ -4011,7 +4086,11 @@ function CatalogueModule({
           <div className="catalogue-filters">
             <label>
               <span>⌕</span>
-              <input placeholder="Rechercher un produit maître..." />
+              <input
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Rechercher un produit maître..."
+                value={query}
+              />
             </label>
             {["Famille", "Marque", "Type", "Statut", "Classification"].map((filter) => (
               <button key={filter} onClick={() => onAction(`Filtre Catalogue ${filter} activé en mode mock.`)} type="button">
@@ -4019,12 +4098,15 @@ function CatalogueModule({
               </button>
             ))}
             <button onClick={() => onAction("Filtres Catalogue réinitialisés.")} type="button">↻ Réinitialiser</button>
+            <button disabled={selectedCodes.length === 0} onClick={() => onAction(`${selectedCodes.length} produit(s) maître(s) préparés pour contrôle MDM.`)} type="button">
+              Contrôler sélection
+            </button>
           </div>
 
           <table className="catalogue-table">
             <thead>
               <tr>
-                <th><input type="checkbox" /></th>
+                <th><input aria-label="Sélectionner les produits visibles" checked={filteredProducts.length > 0 && filteredProducts.every((item) => selectedCodes.includes(item.code))} onChange={toggleAllVisible} type="checkbox" /></th>
                 <th>Code produit</th>
                 <th>Nom produit</th>
                 <th>Famille</th>
@@ -4036,9 +4118,9 @@ function CatalogueModule({
               </tr>
             </thead>
             <tbody>
-              {catalogProducts.map((item) => (
-                <tr key={item.code}>
-                  <td><input type="checkbox" /></td>
+              {filteredProducts.map((item) => (
+                <tr className={selectedCodes.includes(item.code) ? "selected" : ""} key={item.code}>
+                  <td><input aria-label={`Sélectionner ${item.code}`} checked={selectedCodes.includes(item.code)} onChange={() => toggleCode(item.code)} type="checkbox" /></td>
                   <td>
                     <button className="catalogue-code" onClick={() => onOpenProduct(item)} type="button">
                       <span>{item.code.slice(4, 8)}</span>
@@ -4054,8 +4136,17 @@ function CatalogueModule({
                   <td>
                     <div className="row-actions">
                       <button aria-label="Voir" onClick={() => onOpenProduct(item)} type="button">⊙</button>
-                      <button aria-label="Modifier" onClick={() => onAction(`Édition du produit maître ${item.code} ouverte.`)} type="button">✎</button>
-                      <button aria-label="Plus" onClick={() => onAction(`Menu MDM ${item.code} : variantes, modèle, archivage, duplication.`)} type="button">…</button>
+                      <button
+                        aria-label="Modifier"
+                        onClick={() => {
+                          setEditingProduct(item);
+                          setFormMode("edit");
+                        }}
+                        type="button"
+                      >
+                        ✎
+                      </button>
+                      <button aria-label="Supprimer" onClick={() => deleteProduct(item.code)} type="button">×</button>
                     </div>
                   </td>
                 </tr>
@@ -4079,6 +4170,15 @@ function CatalogueModule({
         </article>
 
         <aside className="catalogue-side">
+          <article className="catalogue-active-submodule">
+            <strong>Sous-module actif</strong>
+            <h2>{activeSubmodule}</h2>
+            <p>{catalogueSubmoduleDescription(activeSubmodule)}</p>
+            <button onClick={() => onAction(`${activeSubmodule} ouvert comme espace de travail Catalogue mock.`)} type="button">
+              Ouvrir le sous-module
+            </button>
+          </article>
+
           <article className="catalogue-tree-card">
             <header>
               <strong>Hiérarchie catégories</strong>
@@ -4120,6 +4220,334 @@ function CatalogueModule({
         </aside>
       </section>
     </section>
+  );
+}
+
+function catalogueSubmoduleDescription(submodule: string) {
+  const descriptions: Record<string, string> = {
+    "Catalogue Produits": "Produits maîtres, types, statuts, variantes et gouvernance MDM.",
+    Catégories: "Hiérarchie infinie et arborescence produit sans gestion de stock.",
+    Familles: "Regroupements fonctionnels : médicaments, matériaux, consommables, pièces.",
+    Marques: "Référentiel des marques et fabricants utilisés dans les produits maîtres.",
+    Attributs: "Champs structurants : couleur, taille, poids, puissance, dimensions.",
+    Variantes: "Déclinaisons d’un produit maître selon attributs et combinaisons.",
+    "Modèles d'articles": "Templates de génération d’articles opérationnels depuis Catalogue.",
+    Kits: "Assemblages commerciaux ou opérationnels sans mouvement de stock direct.",
+    "Nomenclatures (BOM)": "Composants structurés pour produits assemblés ou kits techniques.",
+    Classifications: "GS1, UNSPSC, OHADA, ABC, XYZ, classes logistiques et douanières.",
+    "Bibliothèque documentaire": "Documents communs : fiches techniques, normes, notices.",
+    Historique: "Audit des créations, modifications, variantes, archivages et validations."
+  };
+
+  return descriptions[submodule] ?? "Sous-module Catalogue prêt à configurer.";
+}
+
+function CatalogueGovernancePanel({ onAction }: { onAction: (message: string | null) => void }) {
+  return (
+    <section className="catalogue-governance-panel">
+      <header>
+        <div>
+          <strong>Catalogue MDM V1</strong>
+          <p>Le Catalogue porte les données maîtres produit : il ne gère ni stock, ni mouvements, ni achats.</p>
+        </div>
+        <button onClick={() => onAction("Audit Catalogue MDM consulté : frontières fonctionnelles respectées.")} type="button">
+          Audit MDM
+        </button>
+      </header>
+      <div>
+        {[
+          ["Produits maîtres", "Créer, modifier, archiver, dupliquer"],
+          ["Référentiels", "Catégories, familles, marques, attributs"],
+          ["Configuration", "Listes enrichissables, onglets et champs personnalisés"],
+          ["Gouvernance", "Qualité, propriétaire, historique et validation"]
+        ].map(([title, detail]) => (
+          <article key={title}>
+            <strong>{title}</strong>
+            <small>{detail}</small>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function buildCatalogueFormState(initialProduct: CatalogProduct | null) {
+  return {
+    code: initialProduct?.code ?? "MDM-NEW-PRODUCT",
+    name: initialProduct?.name ?? "Nouveau produit maître",
+    family: initialProduct?.family ?? "Consommables / Médicaments",
+    brand: initialProduct?.brand ?? "BioPharma",
+    type: initialProduct?.type ?? "Produit standard",
+    variants: String(initialProduct?.variants ?? 0),
+    status: initialProduct?.status ?? "Brouillon",
+    categoryPath: initialProduct?.categoryPath ?? "Consommables > Médicaments",
+    template: initialProduct?.template ?? "Template Médicament",
+    classification: initialProduct?.classification ?? "GS1 / UNSPSC 51142000",
+    attributes: initialProduct?.attributes.join(", ") ?? "Dosage, Forme, Conservation",
+    documents: String(initialProduct?.documents ?? 0)
+  };
+}
+
+type CatalogueFormState = ReturnType<typeof buildCatalogueFormState>;
+type CatalogueFormField = keyof CatalogueFormState;
+
+function CatalogueFormWorkspace({
+  initialProduct,
+  mode,
+  onCancel,
+  onSave,
+  onSaveAndNew
+}: {
+  initialProduct: CatalogProduct | null;
+  mode: "create" | "edit";
+  onCancel: () => void;
+  onSave: (product: CatalogProduct) => void;
+  onSaveAndNew: (product: CatalogProduct) => void;
+}) {
+  const defaultTabs = ["Master data", "Attributs", "Variantes", "Modèles", "Kits & BOM", "Classifications", "Documents", "Historique"];
+  const [tabs, setTabs] = useState(defaultTabs);
+  const [activeTab, setActiveTab] = useState(defaultTabs[0]);
+  const [form, setForm] = useState(() => buildCatalogueFormState(initialProduct));
+  const [newTabName, setNewTabName] = useState("");
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [customFields, setCustomFields] = useState<Record<string, Array<{ id: string; label: string; value: string }>>>({});
+  const [options, setOptions] = useState({
+    family: ["Consommables / Médicaments", "Consommables / Protection", "Maintenance / Lubrifiants", "Construction / Matériaux"],
+    brand: ["BioPharma", "MediSafe", "Caterpillar", "Gestock Generic"],
+    type: ["Produit standard", "Produit à variantes", "Kit", "Nomenclature", "Service logistique"],
+    status: ["Actif", "Brouillon", "Archivé"],
+    template: ["Template Médicament", "Template Matériaux", "Template Pièce détachée", "Template Produit alimentaire"],
+    classification: ["GS1 / UNSPSC 51142000", "UNSPSC 42132203", "OHADA / Stock", "Classe logistique A"]
+  });
+  const updateField = (field: CatalogueFormField, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+  const addOption = (field: keyof typeof options, value: string) => {
+    const normalizedValue = value.trim();
+    if (!normalizedValue) return;
+    setOptions((current) => ({
+      ...current,
+      [field]: current[field].includes(normalizedValue) ? current[field] : [...current[field], normalizedValue]
+    }));
+    updateField(field, normalizedValue);
+  };
+  const addTab = () => {
+    const normalizedName = newTabName.trim();
+    if (!normalizedName || tabs.includes(normalizedName)) return;
+    setTabs((current) => [...current, normalizedName]);
+    setActiveTab(normalizedName);
+    setNewTabName("");
+  };
+  const addCustomField = () => {
+    const normalizedLabel = newFieldLabel.trim();
+    if (!normalizedLabel) return;
+    setCustomFields((current) => ({
+      ...current,
+      [activeTab]: [...(current[activeTab] ?? []), { id: `${activeTab}-${Date.now()}`, label: normalizedLabel, value: "" }]
+    }));
+    setNewFieldLabel("");
+  };
+  const updateCustomField = (tab: string, id: string, value: string) => {
+    setCustomFields((current) => ({
+      ...current,
+      [tab]: (current[tab] ?? []).map((field) => field.id === id ? { ...field, value } : field)
+    }));
+  };
+  const nextProduct = (): CatalogProduct => ({
+    code: form.code.trim().toUpperCase(),
+    name: form.name.trim(),
+    family: form.family,
+    brand: form.brand,
+    type: form.type as CatalogProduct["type"],
+    variants: Number(form.variants) || 0,
+    status: form.status as CatalogProduct["status"],
+    categoryPath: form.categoryPath,
+    template: form.template,
+    classification: form.classification,
+    attributes: form.attributes.split(",").map((attribute) => attribute.trim()).filter(Boolean),
+    documents: Number(form.documents) || 0
+  });
+  const save = (andNew = false) => {
+    const product = nextProduct();
+    if (!product.code || !product.name) return;
+    if (andNew) {
+      onSaveAndNew(product);
+      setForm(buildCatalogueFormState(null));
+      setActiveTab("Master data");
+      return;
+    }
+    onSave(product);
+  };
+
+  return (
+    <section className="catalogue-form-page">
+      <div className="article-breadcrumb">
+        <button onClick={onCancel} type="button">Catalogue</button>
+        <span>›</span>
+        <strong>{mode === "edit" ? `Modifier ${initialProduct?.code}` : "Nouveau produit maître"}</strong>
+      </div>
+      <header className="article-create-header">
+        <div>
+          <h1>{mode === "edit" ? "Modifier un produit maître" : "Créer un produit maître"}</h1>
+          <p>Renseignez les données MDM qui pourront générer des articles opérationnels.</p>
+        </div>
+        <div>
+          <button onClick={onCancel} type="button">Annuler</button>
+          <button onClick={() => save(false)} type="button">Enregistrer</button>
+          <button className="primary" onClick={() => save(true)} type="button">Enregistrer & Nouveau</button>
+        </div>
+      </header>
+
+      <div className="article-create-layout">
+        <section className="article-create-card">
+          <nav className="article-form-tabs">
+            {tabs.map((tab) => (
+              <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+                {tab}
+              </button>
+            ))}
+          </nav>
+          <section className="article-form-configurator">
+            <div>
+              <strong>Catalogue configurable</strong>
+              <small>Ajoutez des onglets et des champs propres au référentiel produit de l'organisation.</small>
+            </div>
+            <label>
+              <span>Nouvel onglet</span>
+              <input onChange={(event) => setNewTabName(event.target.value)} placeholder="ex. Réglementaire" value={newTabName} />
+              <button onClick={addTab} type="button">Créer</button>
+            </label>
+            <label>
+              <span>Champ personnalisé</span>
+              <input onChange={(event) => setNewFieldLabel(event.target.value)} placeholder={`Champ pour ${activeTab}`} value={newFieldLabel} />
+              <button onClick={addCustomField} type="button">Ajouter</button>
+            </label>
+          </section>
+
+          <div className="article-form-sections">
+            <ArticleFormSection title={activeTab}>
+              {activeTab === "Master data" ? (
+                <>
+                  <CatalogueTextField field="code" form={form} label="Code produit" updateField={updateField} />
+                  <CatalogueTextField field="name" form={form} label="Nom produit" updateField={updateField} />
+                  <CatalogueSelectField field="family" form={form} label="Famille" onCreateOption={(value) => addOption("family", value)} options={options.family} updateField={updateField} />
+                  <CatalogueSelectField field="brand" form={form} label="Marque" onCreateOption={(value) => addOption("brand", value)} options={options.brand} updateField={updateField} />
+                  <CatalogueSelectField field="type" form={form} label="Type" onCreateOption={(value) => addOption("type", value)} options={options.type} updateField={updateField} />
+                  <CatalogueSelectField field="status" form={form} label="Statut" onCreateOption={(value) => addOption("status", value)} options={options.status} updateField={updateField} />
+                  <CatalogueTextField field="categoryPath" form={form} label="Chemin catégorie" updateField={updateField} />
+                </>
+              ) : null}
+              {activeTab === "Attributs" || activeTab === "Variantes" ? (
+                <>
+                  <CatalogueTextField field="attributes" form={form} label="Attributs" updateField={updateField} />
+                  <CatalogueTextField field="variants" form={form} label="Nombre de variantes" updateField={updateField} />
+                </>
+              ) : null}
+              {activeTab === "Modèles" ? (
+                <CatalogueSelectField field="template" form={form} label="Modèle d'article" onCreateOption={(value) => addOption("template", value)} options={options.template} updateField={updateField} />
+              ) : null}
+              {activeTab === "Classifications" ? (
+                <CatalogueSelectField field="classification" form={form} label="Classification" onCreateOption={(value) => addOption("classification", value)} options={options.classification} updateField={updateField} />
+              ) : null}
+              {activeTab === "Documents" ? (
+                <CatalogueTextField field="documents" form={form} label="Nombre de documents" updateField={updateField} />
+              ) : null}
+              {(customFields[activeTab] ?? []).map((field) => (
+                <label key={field.id}>
+                  <span>{field.label}</span>
+                  <input onChange={(event) => updateCustomField(activeTab, field.id, event.target.value)} value={field.value} />
+                </label>
+              ))}
+            </ArticleFormSection>
+          </div>
+        </section>
+
+        <aside className="article-create-side">
+          <article>
+            <strong>Aperçu MDM</strong>
+            <ProductVisual label={form.code.slice(4, 8) || "MDM"} name={form.name} />
+            <InfoRows
+              rows={[
+                ["Code", form.code],
+                ["Famille", form.family],
+                ["Marque", form.brand],
+                ["Type", form.type],
+                ["Classification", form.classification],
+                ["Qualité", "97,8%"]
+              ]}
+            />
+          </article>
+          <article>
+            <strong>Actions MDM</strong>
+            <div className="article-create-actions">
+              <button type="button">Générer article</button>
+              <button type="button">Créer variante</button>
+              <button type="button">Associer document</button>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function CatalogueTextField({
+  field,
+  form,
+  label,
+  updateField
+}: {
+  field: CatalogueFormField;
+  form: CatalogueFormState;
+  label: string;
+  updateField: (field: CatalogueFormField, value: string) => void;
+}) {
+  return (
+    <label>
+      <span>{label}</span>
+      <input onChange={(event) => updateField(field, event.target.value)} value={String(form[field])} />
+    </label>
+  );
+}
+
+function CatalogueSelectField({
+  field,
+  form,
+  label,
+  onCreateOption,
+  options,
+  updateField
+}: {
+  field: CatalogueFormField;
+  form: CatalogueFormState;
+  label: string;
+  onCreateOption: (value: string) => void;
+  options: string[];
+  updateField: (field: CatalogueFormField, value: string) => void;
+}) {
+  const [newOption, setNewOption] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
+  return (
+    <div className="enrichable-select">
+      <label>
+        <span>{label}</span>
+        <select onChange={(event) => updateField(field, event.target.value)} value={String(form[field])}>
+          {options.map((option) => <option key={option}>{option}</option>)}
+        </select>
+      </label>
+      <button onClick={() => setIsCreating((current) => !current)} type="button">{isCreating ? "Fermer" : "+ Créer"}</button>
+      {isCreating ? (
+        <div>
+          <input onChange={(event) => setNewOption(event.target.value)} placeholder={`Nouvelle valeur ${label.toLowerCase()}`} value={newOption} />
+          <button onClick={() => {
+            onCreateOption(newOption);
+            setNewOption("");
+            setIsCreating(false);
+          }} type="button">Enregistrer</button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
