@@ -56,6 +56,19 @@ interface CatalogProduct {
   documents: number;
 }
 
+interface ModuleBlueprint {
+  title: string;
+  subtitle: string;
+  submodules: string[];
+  kpis: Array<[string, string, string, string]>;
+  columns: string[];
+  rows: string[][];
+  primaryAction: string;
+  secondaryAction: string;
+  sideTitle: string;
+  sideItems: Array<[string, string]>;
+}
+
 const navigationItems = [
   "Tableau de bord",
   "Articles",
@@ -408,6 +421,364 @@ const categoryTree = [
   ["Équipements", "Uniformes", "Sécurité"],
   ["Nomenclatures", "Mobilier", "IT"]
 ];
+
+const moduleBlueprints: Record<string, ModuleBlueprint> = {
+  Stocks: {
+    title: "Stocks",
+    subtitle: "Vue globale des disponibilités, réservations, valorisations et couvertures multi-entrepôts.",
+    submodules: [
+      "Vue globale stock",
+      "Disponibilités",
+      "Réservations",
+      "Valorisation",
+      "Couverture",
+      "Rotation",
+      "Multi-entrepôts",
+      "Analyse ABC",
+      "Historique stock"
+    ],
+    kpis: [
+      ["1,24 Md", "Valeur stock", "▤", "blue"],
+      ["92,4%", "Disponibilité", "◇", "green"],
+      ["350", "Réservations", "□", "purple"],
+      ["78 j", "Couverture", "◷", "orange"]
+    ],
+    columns: ["Entrepôt", "Articles", "Valeur", "Disponible", "Réservé", "Couverture", "Statut"],
+    rows: [
+      ["Dakar", "1 245", "456 780 000", "93%", "350", "82 j", "Stable"],
+      ["Thiès", "768", "234 560 000", "90%", "180", "65 j", "À surveiller"],
+      ["Kaolack", "614", "198 430 000", "88%", "96", "54 j", "Stable"],
+      ["Saint-Louis", "402", "156 230 000", "91%", "74", "71 j", "Stable"]
+    ],
+    primaryAction: "Analyser couverture",
+    secondaryAction: "Exporter stock",
+    sideTitle: "Alertes stock",
+    sideItems: [["Ruptures critiques", "28 articles"], ["Surstock", "17 références"], ["Réservations bloquées", "9 lignes"]]
+  },
+  Entrées: {
+    title: "Entrées",
+    subtitle: "Réceptions fournisseurs, internes, retours et contrôle qualité réception.",
+    submodules: [
+      "Réceptions fournisseurs",
+      "Réceptions internes",
+      "Réceptions retours",
+      "Contrôle qualité réception",
+      "Réceptions en attente",
+      "Historique réceptions"
+    ],
+    kpis: [
+      ["42", "Réceptions ouvertes", "▥", "blue"],
+      ["18", "En attente QC", "△", "orange"],
+      ["96,8%", "Conformité", "♢", "green"],
+      ["7", "Retards", "◷", "red"]
+    ],
+    columns: ["Réception", "Origine", "Fournisseur/Site", "Articles", "Statut", "Contrôle", "Date prévue"],
+    rows: [
+      ["REC-00045", "Fournisseur", "PHARMA CI", "Paracétamol 500mg", "Réceptionnée", "Conforme", "31/05/2024"],
+      ["REC-00046", "Interne", "Hub Dakar", "Gants latex", "En attente", "À contrôler", "01/06/2024"],
+      ["RET-00012", "Retour", "Client B2B", "Ciment 50kg", "À traiter", "Litige", "02/06/2024"]
+    ],
+    primaryAction: "Nouvelle réception",
+    secondaryAction: "Scanner BL",
+    sideTitle: "Qualité réception",
+    sideItems: [["Lots à contrôler", "18"], ["Écarts quantité", "5"], ["Documents manquants", "3"]]
+  },
+  Sorties: {
+    title: "Sorties",
+    subtitle: "Sorties vente, consommation, projets, pertes, destruction et historique.",
+    submodules: [
+      "Sorties vente",
+      "Sorties consommation",
+      "Sorties projets",
+      "Sorties pertes",
+      "Sorties destruction",
+      "Historique sorties"
+    ],
+    kpis: [
+      ["64", "Sorties du jour", "⇧", "blue"],
+      ["12", "À valider", "☑", "orange"],
+      ["4", "Pertes", "△", "red"],
+      ["98%", "Traçabilité", "♢", "green"]
+    ],
+    columns: ["Sortie", "Type", "Article", "Entrepôt", "Quantité", "Demandeur", "Statut"],
+    rows: [
+      ["SOR-00123", "Vente", "Gants médicaux latex", "Thiès", "-1 000", "Fatou Ndiaye", "Validée"],
+      ["SOR-00124", "Projet", "Fer à béton 12mm", "Dakar", "-120", "Mamadou Fall", "Préparée"],
+      ["SOR-00125", "Consommation", "Cahier A4", "Bénin", "-80", "Grâce Mensah", "À valider"]
+    ],
+    primaryAction: "Créer sortie",
+    secondaryAction: "Préparer picking",
+    sideTitle: "Contrôles sortie",
+    sideItems: [["Picking en retard", "6"], ["Sorties à approuver", "12"], ["Destructions sensibles", "2"]]
+  },
+  Transferts: {
+    title: "Transferts",
+    subtitle: "Transferts inter-entrepôts, inter-sites, rééquilibrage, demandes et validations.",
+    submodules: [
+      "Transferts inter-entrepôts",
+      "Transferts inter-sites",
+      "Rééquilibrage",
+      "Demandes de transfert",
+      "Validation",
+      "Historique"
+    ],
+    kpis: [
+      ["21", "Transferts ouverts", "⇆", "blue"],
+      ["8", "En transit", "▤", "orange"],
+      ["3", "Écarts transport", "△", "red"],
+      ["94%", "Réception conforme", "♢", "green"]
+    ],
+    columns: ["Transfert", "Source", "Destination", "Article", "Quantité", "Transport", "Statut"],
+    rows: [
+      ["TRF-00078", "Dakar", "Saint-Louis", "Huile moteur 5L", "500", "Interne", "En transit"],
+      ["TRF-00079", "Abidjan", "Dakar", "Masques chirurgicaux", "1 200", "Transit", "Demandé"],
+      ["TRF-00080", "Kaolack", "Thiès", "Riz 25kg", "300", "Interne", "Réceptionné"]
+    ],
+    primaryAction: "Demander transfert",
+    secondaryAction: "Valider réception",
+    sideTitle: "Rééquilibrage suggéré",
+    sideItems: [["Dakar → Thiès", "Gants latex"], ["Kaolack → Dakar", "Riz 25kg"], ["Bénin → Abidjan", "Eau 0.5L"]]
+  },
+  Inventaires: {
+    title: "Inventaires",
+    subtitle: "Inventaires tournants, annuels, par zone, par article, écarts et ajustements.",
+    submodules: [
+      "Inventaire tournant",
+      "Inventaire annuel",
+      "Inventaire par zone",
+      "Inventaire par article",
+      "Écarts",
+      "Ajustements",
+      "Historique"
+    ],
+    kpis: [
+      ["14", "Campagnes actives", "☑", "blue"],
+      ["2,1%", "Écart moyen", "△", "orange"],
+      ["86%", "Comptage réalisé", "▦", "green"],
+      ["9", "Ajustements à valider", "◇", "red"]
+    ],
+    columns: ["Campagne", "Périmètre", "Articles", "Progression", "Écart valeur", "Responsable", "Statut"],
+    rows: [
+      ["INV-TOUR-05", "Zone A Dakar", "245", "86%", "1,2M", "Nawa Sarr", "En cours"],
+      ["INV-ANN-24", "Tous sites", "2 356", "12%", "0", "Moussa Traoré", "Planifié"],
+      ["INV-ART-88", "Paracétamol", "1", "100%", "0", "Amadou Diop", "Clôturé"]
+    ],
+    primaryAction: "Créer inventaire",
+    secondaryAction: "Saisir comptage",
+    sideTitle: "Écarts sensibles",
+    sideItems: [["Écart Ciment", "4,2M FCFA"], ["Écart Gants", "850 unités"], ["Validation manager", "9 lignes"]]
+  },
+  "Lots & Séries": {
+    title: "Lots & Séries",
+    subtitle: "Vue globale de tous les lots, séries, quarantaines, traçabilité et rappels produits.",
+    submodules: ["Lots actifs", "Lots expirés", "Séries", "Quarantaine", "Traçabilité", "Rappels produits", "Historique"],
+    kpis: [
+      ["1 842", "Lots actifs", "▣", "blue"],
+      ["36", "Proches expiration", "◷", "orange"],
+      ["12", "Quarantaine", "△", "red"],
+      ["100%", "Traçabilité", "♢", "green"]
+    ],
+    columns: ["Lot/Série", "Article", "Entrepôt", "Quantité", "Expiration", "Statut", "Traçabilité"],
+    rows: [
+      ["LOT-240501", "Paracétamol 500mg", "Dakar", "720", "15/08/2024", "Actif", "Complète"],
+      ["LOT-240488", "Gants latex", "Thiès", "450", "12/12/2026", "Actif", "Complète"],
+      ["SER-PC-0091", "Ordinateur bureau", "Dakar", "1", "-", "Série", "Complète"]
+    ],
+    primaryAction: "Tracer un lot",
+    secondaryAction: "Créer rappel",
+    sideTitle: "Alertes lots",
+    sideItems: [["Expiration < 90 jours", "36"], ["Quarantaine", "12"], ["Rappel produit", "1 actif"]]
+  },
+  Péremptions: {
+    title: "Péremptions",
+    subtitle: "Pilotage des dates de péremption, alertes, seuils, retraits et actions préventives.",
+    submodules: ["À surveiller", "Proches expiration", "Expirés", "Retraits", "Seuils alerte", "Historique"],
+    kpis: [
+      ["142", "À surveiller", "◷", "orange"],
+      ["28", "< 30 jours", "△", "red"],
+      ["7", "Expirés", "▣", "red"],
+      ["96%", "Traitement", "♢", "green"]
+    ],
+    columns: ["Article", "Lot", "Entrepôt", "Quantité", "Expiration", "Jours restants", "Action"],
+    rows: [
+      ["Paracétamol 500mg", "LOT-240501", "Dakar", "720", "15/08/2024", "75", "Surveiller"],
+      ["Produit alimentaire", "LOT-240477", "Kaolack", "180", "10/07/2024", "39", "Accélérer sortie"],
+      ["Réactif chimique", "LOT-240122", "Bénin", "24", "25/06/2024", "5", "Bloquer"]
+    ],
+    primaryAction: "Créer action retrait",
+    secondaryAction: "Exporter péremptions",
+    sideTitle: "Priorités",
+    sideItems: [["Risque sanitaire", "3 lots"], ["Sortie accélérée", "18 lots"], ["Blocage recommandé", "7 lots"]]
+  },
+  Approvisionnements: {
+    title: "Approvisionnements",
+    subtitle: "Demandes de réapprovisionnement, suggestions, seuils et consolidation besoins.",
+    submodules: ["Besoins", "Suggestions", "Demandes", "Seuils", "Prévisions", "Historique"],
+    kpis: [
+      ["58", "Besoins détectés", "□", "blue"],
+      ["22", "Demandes ouvertes", "▤", "orange"],
+      ["15,2M", "Valeur suggérée", "◇", "green"],
+      ["9", "Urgences", "△", "red"]
+    ],
+    columns: ["Besoin", "Article", "Entrepôt", "Quantité suggérée", "Priorité", "Source", "Statut"],
+    rows: [
+      ["BES-00091", "Ciment 50kg", "Dakar", "1 500", "Haute", "Seuil min", "À valider"],
+      ["BES-00092", "Masques chirurgicaux", "Thiès", "800", "Moyenne", "Prévision", "Brouillon"],
+      ["BES-00093", "Riz 25kg", "Saint-Louis", "2 000", "Critique", "Rupture", "Urgent"]
+    ],
+    primaryAction: "Générer demande",
+    secondaryAction: "Calculer besoins",
+    sideTitle: "Moteur de suggestion",
+    sideItems: [["Seuils déclenchés", "31"], ["Prévisions IA", "18"], ["Ruptures immédiates", "9"]]
+  },
+  Achats: {
+    title: "Achats",
+    subtitle: "Demandes d'achat, commandes fournisseurs, validations, réceptions et performance.",
+    submodules: ["Demandes d'achat", "Commandes", "Validations", "Réceptions liées", "Contrats", "Historique"],
+    kpis: [
+      ["32", "Commandes ouvertes", "▱", "blue"],
+      ["12,5M", "Montant engagé", "◇", "green"],
+      ["8", "À approuver", "☑", "orange"],
+      ["5", "Retards fournisseur", "△", "red"]
+    ],
+    columns: ["Commande", "Fournisseur", "Articles", "Montant", "Devise", "Statut", "Échéance"],
+    rows: [
+      ["PO-2408", "PHARMA CI", "Paracétamol", "4 500 000", "XOF", "Approuvée", "05/06/2024"],
+      ["PO-2409", "MedEquip", "Gants latex", "2 850 000", "XOF", "Envoyée", "07/06/2024"],
+      ["DA-0014", "CimAfrique", "Ciment", "6 300 000", "XOF", "Validation", "03/06/2024"]
+    ],
+    primaryAction: "Créer commande",
+    secondaryAction: "Nouvelle demande",
+    sideTitle: "Workflow achats",
+    sideItems: [["DG à valider", "2"], ["Finance", "6"], ["Relance fournisseur", "5"]]
+  },
+  Fournisseurs: {
+    title: "Fournisseurs",
+    subtitle: "Référentiel fournisseurs, contacts, contrats, évaluations et performance.",
+    submodules: ["Liste fournisseurs", "Contacts", "Contrats", "Évaluations", "Documents", "Historique"],
+    kpis: [
+      ["248", "Fournisseurs actifs", "♙", "blue"],
+      ["92%", "Performance moyenne", "♢", "green"],
+      ["14", "Contrats expirent", "◷", "orange"],
+      ["6", "Risques", "△", "red"]
+    ],
+    columns: ["Fournisseur", "Pays", "Catégorie", "Performance", "Contrats", "Dernière commande", "Statut"],
+    rows: [
+      ["PHARMA CI", "Côte d'Ivoire", "Médicaments", "97%", "3", "PO-2408", "Actif"],
+      ["MedEquip", "Sénégal", "Consommables", "91%", "2", "PO-2409", "Actif"],
+      ["CimAfrique", "Sénégal", "Matériaux", "86%", "1", "DA-0014", "À surveiller"]
+    ],
+    primaryAction: "Nouveau fournisseur",
+    secondaryAction: "Évaluer fournisseur",
+    sideTitle: "Conformité fournisseur",
+    sideItems: [["KYC incomplets", "8"], ["Documents expirés", "14"], ["Score faible", "6"]]
+  },
+  Entrepôts: {
+    title: "Entrepôts",
+    subtitle: "Sites, entrepôts, capacités, zones, emplacements et performance opérationnelle.",
+    submodules: ["Entrepôts", "Zones", "Capacités", "Température", "Équipes", "Historique"],
+    kpis: [
+      ["8", "Entrepôts", "⌂", "blue"],
+      ["78,3%", "Occupation", "▦", "green"],
+      ["4", "Zones froides", "❄", "blue"],
+      ["3", "Surcharges", "△", "orange"]
+    ],
+    columns: ["Entrepôt", "Site", "Type", "Occupation", "Service", "Responsable", "Statut"],
+    rows: [
+      ["Entrepôt Dakar", "Dakar", "Central", "78%", "96%", "Amadou Diop", "Opérationnel"],
+      ["Entrepôt Thiès", "Thiès", "Régional", "64%", "93%", "Fatou Ndiaye", "Opérationnel"],
+      ["Zone froide Yoff", "Dakar", "Cold-chain", "71%", "98%", "Nawa Sarr", "Surveillé"]
+    ],
+    primaryAction: "Créer entrepôt",
+    secondaryAction: "Plan capacité",
+    sideTitle: "Capacité",
+    sideItems: [["Surcharge", "3 zones"], ["Disponible", "21%"], ["Maintenance", "2 équipements"]]
+  },
+  Emplacements: {
+    title: "Emplacements",
+    subtitle: "Adressage warehouse : zones, allées, racks, bacs, codes-barres et capacités.",
+    submodules: ["Plan emplacements", "Zones", "Racks", "Bacs", "Codes-barres", "Historique"],
+    kpis: [
+      ["1 240", "Emplacements", "⌖", "blue"],
+      ["82%", "Occupation", "▦", "green"],
+      ["74", "Libres", "□", "orange"],
+      ["12", "Bloqués", "△", "red"]
+    ],
+    columns: ["Code", "Entrepôt", "Zone", "Type", "Occupation", "Article principal", "Statut"],
+    rows: [
+      ["DKR-A-12", "Dakar", "A", "Rack", "86%", "Paracétamol", "Actif"],
+      ["THI-B-04", "Thiès", "B", "Bac", "62%", "Gants latex", "Actif"],
+      ["DKR-COLD-01", "Dakar", "Froid", "Palette", "91%", "Réactifs", "Contrôlé"]
+    ],
+    primaryAction: "Créer emplacement",
+    secondaryAction: "Imprimer codes",
+    sideTitle: "Adressage",
+    sideItems: [["Sans code-barres", "24"], ["Capacité faible", "17"], ["Bloqués", "12"]]
+  },
+  Rapports: {
+    title: "Rapports",
+    subtitle: "BI opérationnelle : stocks, achats, mouvements, valorisation, alertes et exports.",
+    submodules: ["Tableaux de bord", "Stocks", "Achats", "Mouvements", "Valorisation", "Exports", "Historique"],
+    kpis: [
+      ["18", "Rapports actifs", "▥", "blue"],
+      ["7", "Planifiés", "◷", "green"],
+      ["42", "Exports mois", "⇩", "purple"],
+      ["3", "Échecs", "△", "red"]
+    ],
+    columns: ["Rapport", "Domaine", "Fréquence", "Dernière génération", "Format", "Destinataires", "Statut"],
+    rows: [
+      ["Valorisation stock", "Stock", "Mensuel", "31/05/2024", "PDF/XLSX", "Direction", "Succès"],
+      ["Ruptures critiques", "Alertes", "Quotidien", "01/06/2024", "PDF", "Stock", "Succès"],
+      ["Performance achats", "Achats", "Hebdo", "30/05/2024", "XLSX", "Finance", "Planifié"]
+    ],
+    primaryAction: "Créer rapport",
+    secondaryAction: "Exporter maintenant",
+    sideTitle: "Exports",
+    sideItems: [["PDF", "24"], ["Excel", "18"], ["API", "6"]]
+  },
+  Alertes: {
+    title: "Alertes",
+    subtitle: "Centre d'alertes : ruptures, péremptions, retards, écarts, qualité et workflows.",
+    submodules: ["Toutes", "Critiques", "Stock", "Péremption", "Achats", "Qualité", "Historique"],
+    kpis: [
+      ["12", "Critiques", "△", "red"],
+      ["28", "Stocks faibles", "▤", "orange"],
+      ["9", "Péremptions", "◷", "orange"],
+      ["86%", "Traitement SLA", "♢", "green"]
+    ],
+    columns: ["Alerte", "Domaine", "Objet", "Priorité", "Responsable", "Échéance", "Statut"],
+    rows: [
+      ["ALT-0001", "Stock", "Riz 25kg rupture", "Critique", "Nadia Kouamé", "Aujourd'hui", "Ouverte"],
+      ["ALT-0002", "Péremption", "LOT-240501", "Haute", "Amadou Diop", "7 jours", "En cours"],
+      ["ALT-0003", "Achats", "Retard PO-2409", "Moyenne", "Ibrahima Sow", "2 jours", "Ouverte"]
+    ],
+    primaryAction: "Traiter alerte",
+    secondaryAction: "Créer règle",
+    sideTitle: "SLA alertes",
+    sideItems: [["En retard", "4"], ["Aujourd'hui", "12"], ["Escaladées", "3"]]
+  },
+  Paramètres: {
+    title: "Paramètres",
+    subtitle: "Administration tenant : utilisateurs, rôles, RBAC, workflow, sécurité, intégrations et audit.",
+    submodules: ["Organisation", "Utilisateurs", "Rôles & permissions", "Workflows", "Sécurité", "Intégrations", "Audit"],
+    kpis: [
+      ["156", "Utilisateurs", "♙", "blue"],
+      ["18", "Rôles", "☑", "green"],
+      ["7", "Workflows", "▧", "purple"],
+      ["100%", "Audit actif", "♢", "green"]
+    ],
+    columns: ["Paramètre", "Domaine", "Valeur", "Portée", "Dernière modification", "Acteur", "Statut"],
+    rows: [
+      ["MFA Direction", "Sécurité", "Obligatoire", "Rôles sensibles", "31/05/2024", "Admin", "Actif"],
+      ["RLS Tenant", "Données", "Activé", "Organisation", "30/05/2024", "Système", "Actif"],
+      ["Workflow achats", "Validation", "DG > Finance", "Achats", "29/05/2024", "Admin", "Actif"]
+    ],
+    primaryAction: "Ajouter utilisateur",
+    secondaryAction: "Configurer rôle",
+    sideTitle: "Sécurité",
+    sideItems: [["MFA requis", "3 rôles"], ["Sessions actives", "42"], ["Événements audit", "1 284"]]
+  }
+};
 
 export function App({ model }: AppProps) {
   const [screen, setScreen] = useState<Screen>("login");
@@ -984,7 +1355,11 @@ function DashboardScreen({
               {isDashboard ? (
                 <DashboardContent model={model} />
               ) : (
-                <ModulePlaceholder moduleName={activeNav} organization={organization} />
+                <ModuleWorkbench
+                  moduleName={activeNav}
+                  onAction={onAction}
+                  organization={organization}
+                />
               )}
             </>
           )}
@@ -1831,25 +2206,130 @@ function DataTable({
   );
 }
 
-function ModulePlaceholder({
+function ModuleWorkbench({
   moduleName,
+  onAction,
   organization
 }: {
   moduleName: string;
+  onAction: (message: string | null) => void;
   organization: MockOrganizationAccess;
 }) {
+  const blueprint = moduleBlueprints[moduleName] ?? {
+    title: moduleName,
+    subtitle: `Module ${moduleName.toLowerCase()} relié au contexte de ${organization.name}.`,
+    submodules: ["Vue générale", "Liste", "Détail", "Historique", "Paramètres"],
+    kpis: [
+      ["--", "Indicateur principal", "▧", "blue"],
+      ["--", "En cours", "◷", "orange"],
+      ["--", "À valider", "☑", "purple"],
+      ["--", "Qualité", "♢", "green"]
+    ],
+    columns: ["Référence", "Objet", "Type", "Statut", "Responsable", "Échéance"],
+    rows: [
+      ["MOCK-001", moduleName, "Workflow", "Préparé", "Équipe GESTOCK", "À définir"],
+      ["MOCK-002", `${moduleName} avancé`, "Paramétrage", "Mock", "Administrateur", "À définir"]
+    ],
+    primaryAction: "Créer",
+    secondaryAction: "Importer",
+    sideTitle: "Contexte",
+    sideItems: [["Organisation", organization.name], ["Mode", "Mock"], ["Sécurité", "RBAC/RLS préparé"]]
+  } satisfies ModuleBlueprint;
+
   return (
-    <section className="module-placeholder">
-      <span>▧</span>
-      <h2>{moduleName}</h2>
-      <p>
-        Le module {moduleName.toLowerCase()} est déjà relié au contexte mock de {organization.name}.
-        Les sous-modules, formulaires, listes et permissions seront ajoutés écran par écran.
-      </p>
-      <div>
-        <button type="button">Créer une opération</button>
-        <button type="button">Importer des données</button>
-        <button type="button">Voir les paramètres</button>
+    <section className="module-workbench">
+      <header className="module-workbench-header">
+        <div>
+          <h2>{blueprint.title}</h2>
+          <p>{blueprint.subtitle}</p>
+        </div>
+        <div>
+          <button onClick={() => onAction(`${blueprint.secondaryAction} ouvert dans ${blueprint.title}.`)} type="button">
+            ⇩ {blueprint.secondaryAction}
+          </button>
+          <button className="primary" onClick={() => onAction(`${blueprint.primaryAction} ouvert dans ${blueprint.title}.`)} type="button">
+            + {blueprint.primaryAction}
+          </button>
+        </div>
+      </header>
+
+      <nav className="module-subnav">
+        {blueprint.submodules.map((submodule, index) => (
+          <button
+            className={index === 0 ? "active" : ""}
+            key={submodule}
+            onClick={() => onAction(`${blueprint.title} > ${submodule} prêt pour écran détaillé.`)}
+            type="button"
+          >
+            {submodule}
+          </button>
+        ))}
+      </nav>
+
+      <section className="module-kpi-grid">
+        {blueprint.kpis.map(([value, label, icon, tone]) => (
+          <article key={label}>
+            <strong>{value}</strong>
+            <small>{label}</small>
+            <span className={tone}>{icon}</span>
+          </article>
+        ))}
+      </section>
+
+      <div className="module-workbench-grid">
+        <article className="module-table-card">
+          <div className="module-table-toolbar">
+            <label>
+              <span>⌕</span>
+              <input placeholder={`Rechercher dans ${blueprint.title.toLowerCase()}...`} />
+            </label>
+            <button onClick={() => onAction(`Filtres ${blueprint.title} ouverts.`)} type="button">Filtres ⌄</button>
+            <button onClick={() => onAction(`Export ${blueprint.title} préparé.`)} type="button">Exporter</button>
+            <button onClick={() => onAction(`Colonnes ${blueprint.title} configurables.`)} type="button">⚙</button>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                {blueprint.columns.map((column) => (
+                  <th key={column}>{column}</th>
+                ))}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {blueprint.rows.map((row) => (
+                <tr key={row.join("-")}>
+                  {row.map((cell) => (
+                    <td key={cell}>{cell}</td>
+                  ))}
+                  <td>
+                    <div className="row-actions">
+                      <button onClick={() => onAction(`Détail ${row[0]} ouvert dans ${blueprint.title}.`)} type="button">⊙</button>
+                      <button onClick={() => onAction(`Édition ${row[0]} ouverte dans ${blueprint.title}.`)} type="button">✎</button>
+                      <button onClick={() => onAction(`Menu actions ${row[0]} ouvert dans ${blueprint.title}.`)} type="button">…</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </article>
+
+        <aside className="module-side-card">
+          <strong>{blueprint.sideTitle}</strong>
+          {blueprint.sideItems.map(([label, value]) => (
+            <button key={label} onClick={() => onAction(`${label} : ${value}`)} type="button">
+              <span>{label}</span>
+              <b>{value}</b>
+            </button>
+          ))}
+          <div className="module-security-note">
+            <small>Tenant actif</small>
+            <strong>{organization.name}</strong>
+            <p>Les actions sont mockées mais préparées pour RBAC, audit trail et RLS Supabase.</p>
+          </div>
+        </aside>
       </div>
     </section>
   );
