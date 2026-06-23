@@ -2361,11 +2361,80 @@ function ArticleFormWorkspace({
   onSave: (article: ArticleRecord) => void;
   onSaveAndNew: (article: ArticleRecord) => void;
 }) {
-  const tabs = ["Général", "Logistique", "Stock", "Identification", "Fournisseurs", "Financier", "Lots & Séries", "Documents", "Autres"];
-  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const defaultTabs = ["Général", "Logistique", "Stock", "Identification", "Fournisseurs", "Financier", "Lots & Séries", "Documents", "Autres"];
+  const [tabs, setTabs] = useState(defaultTabs);
+  const [activeTab, setActiveTab] = useState(defaultTabs[0]);
   const [form, setForm] = useState(() => buildArticleFormState(initialArticle));
+  const [newTabName, setNewTabName] = useState("");
+  const [renameTabValue, setRenameTabValue] = useState(defaultTabs[0]);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [customFields, setCustomFields] = useState<Record<string, Array<{ id: string; label: string; value: string }>>>({});
+  const [selectOptions, setSelectOptions] = useState({
+    status: ["Actif", "Sous stock", "Rupture"],
+    category: ["Médicaments", "Consommables", "Matériaux", "Alimentaire", "Fournitures"],
+    subCategory: ["Analgésiques", "Protection", "Construction", "Denrées", "Papeterie"],
+    baseUnit: ["Boîte", "Pièce", "Sac", "Bidon", "Bouteille"],
+    purchaseUnit: ["Carton (50 boîtes)", "Palette", "Lot fournisseur", "Unité"],
+    saleUnit: ["Boîte (20)", "Pièce", "Sac", "Carton"],
+    valuationMethod: ["FIFO", "CUMP", "LIFO", "Standard"],
+    supplier: ["PHARMA CI", "MedEquip", "Dakar Pharma", "BioPharma"]
+  });
   const updateField = (field: keyof typeof form, value: string | boolean) => {
     setForm((current) => ({ ...current, [field]: value }));
+  };
+  const addSelectionOption = (field: keyof typeof selectOptions, value: string) => {
+    const normalizedValue = value.trim();
+
+    if (!normalizedValue) return;
+
+    setSelectOptions((current) => ({
+      ...current,
+      [field]: current[field].includes(normalizedValue) ? current[field] : [...current[field], normalizedValue]
+    }));
+    updateField(field, normalizedValue);
+  };
+  const addTab = () => {
+    const normalizedName = newTabName.trim();
+
+    if (!normalizedName || tabs.includes(normalizedName)) return;
+
+    setTabs((current) => [...current, normalizedName]);
+    setActiveTab(normalizedName);
+    setRenameTabValue(normalizedName);
+    setNewTabName("");
+  };
+  const renameActiveTab = () => {
+    const normalizedName = renameTabValue.trim();
+
+    if (!normalizedName || tabs.includes(normalizedName)) return;
+
+    setTabs((current) => current.map((tab) => tab === activeTab ? normalizedName : tab));
+    setCustomFields((current) => {
+      const next = { ...current, [normalizedName]: current[activeTab] ?? [] };
+      delete next[activeTab];
+      return next;
+    });
+    setActiveTab(normalizedName);
+  };
+  const addCustomField = () => {
+    const normalizedLabel = newFieldLabel.trim();
+
+    if (!normalizedLabel) return;
+
+    setCustomFields((current) => ({
+      ...current,
+      [activeTab]: [
+        ...(current[activeTab] ?? []),
+        { id: `${activeTab}-${Date.now()}`, label: normalizedLabel, value: "" }
+      ]
+    }));
+    setNewFieldLabel("");
+  };
+  const updateCustomField = (tab: string, id: string, value: string) => {
+    setCustomFields((current) => ({
+      ...current,
+      [tab]: (current[tab] ?? []).map((field) => field.id === id ? { ...field, value } : field)
+    }));
   };
   const nextArticle = (): ArticleRecord => ({
     reference: form.reference.trim().toUpperCase(),
@@ -2421,21 +2490,51 @@ function ArticleFormWorkspace({
         <section className="article-create-card">
           <nav className="article-form-tabs">
             {tabs.map((tab) => (
-              <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => setActiveTab(tab)} type="button">
+              <button
+                className={activeTab === tab ? "active" : ""}
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setRenameTabValue(tab);
+                }}
+                type="button"
+              >
                 {tab}
               </button>
             ))}
           </nav>
+
+          <section className="article-form-configurator">
+            <div>
+              <strong>Formulaire adaptable</strong>
+              <small>Ajoutez des onglets, renommez l'onglet courant et créez des champs propres à l'organisation.</small>
+            </div>
+            <label>
+              <span>Nouvel onglet</span>
+              <input onChange={(event) => setNewTabName(event.target.value)} placeholder="ex. Réglementaire" value={newTabName} />
+              <button onClick={addTab} type="button">Créer</button>
+            </label>
+            <label>
+              <span>Renommer l'onglet actif</span>
+              <input onChange={(event) => setRenameTabValue(event.target.value)} value={renameTabValue} />
+              <button onClick={renameActiveTab} type="button">Renommer</button>
+            </label>
+            <label>
+              <span>Champ personnalisé</span>
+              <input onChange={(event) => setNewFieldLabel(event.target.value)} placeholder={`Nouveau champ pour ${activeTab}`} value={newFieldLabel} />
+              <button onClick={addCustomField} type="button">Ajouter</button>
+            </label>
+          </section>
 
           {activeTab === "Général" ? (
             <div className="article-form-sections">
               <ArticleFormSection title="Informations générales">
                 <ArticleTextField field="reference" form={form} label="Référence" required updateField={updateField} />
                 <ArticleTextField field="designation" form={form} label="Désignation" required updateField={updateField} />
-                <ArticleSelectField field="status" form={form} label="Statut" options={["Actif", "Sous stock", "Rupture"]} updateField={updateField} />
+                <ArticleSelectField field="status" form={form} label="Statut" onCreateOption={(value) => addSelectionOption("status", value)} options={selectOptions.status} updateField={updateField} />
                 <ArticleTextAreaField field="description" form={form} label="Description" updateField={updateField} />
-                <ArticleSelectField field="category" form={form} label="Catégorie" options={["Médicaments", "Consommables", "Matériaux", "Alimentaire", "Fournitures"]} updateField={updateField} />
-                <ArticleSelectField field="subCategory" form={form} label="Sous-catégorie" options={["Analgésiques", "Protection", "Construction", "Denrées", "Papeterie"]} updateField={updateField} />
+                <ArticleSelectField field="category" form={form} label="Catégorie" onCreateOption={(value) => addSelectionOption("category", value)} options={selectOptions.category} updateField={updateField} />
+                <ArticleSelectField field="subCategory" form={form} label="Sous-catégorie" onCreateOption={(value) => addSelectionOption("subCategory", value)} options={selectOptions.subCategory} updateField={updateField} />
                 <ArticleTextField field="brand" form={form} label="Marque" updateField={updateField} />
                 <ArticleTextField field="family" form={form} label="Famille" updateField={updateField} />
                 <ArticleTextField field="sku" form={form} label="SKU" updateField={updateField} />
@@ -2446,9 +2545,9 @@ function ArticleFormWorkspace({
           {activeTab === "Logistique" ? (
             <div className="article-form-sections">
               <ArticleFormSection title="Caractéristiques logistiques">
-                <ArticleSelectField field="baseUnit" form={form} label="Unité de base" options={["Boîte", "Pièce", "Sac", "Bidon", "Bouteille"]} updateField={updateField} />
-                <ArticleSelectField field="purchaseUnit" form={form} label="Unité d'achat" options={["Carton (50 boîtes)", "Palette", "Lot fournisseur", "Unité"]} updateField={updateField} />
-                <ArticleSelectField field="saleUnit" form={form} label="Unité de vente" options={["Boîte (20)", "Pièce", "Sac", "Carton"]} updateField={updateField} />
+                <ArticleSelectField field="baseUnit" form={form} label="Unité de base" onCreateOption={(value) => addSelectionOption("baseUnit", value)} options={selectOptions.baseUnit} updateField={updateField} />
+                <ArticleSelectField field="purchaseUnit" form={form} label="Unité d'achat" onCreateOption={(value) => addSelectionOption("purchaseUnit", value)} options={selectOptions.purchaseUnit} updateField={updateField} />
+                <ArticleSelectField field="saleUnit" form={form} label="Unité de vente" onCreateOption={(value) => addSelectionOption("saleUnit", value)} options={selectOptions.saleUnit} updateField={updateField} />
                 <ArticleTextField field="packaging" form={form} label="Conditionnement" updateField={updateField} />
                 <ArticleTextField field="netWeight" form={form} label="Poids net (kg)" updateField={updateField} />
                 <ArticleTextField field="volume" form={form} label="Volume (m3)" updateField={updateField} />
@@ -2467,7 +2566,7 @@ function ArticleFormWorkspace({
                 <ArticleTextField field="safetyStock" form={form} label="Stock de sécurité" updateField={updateField} />
                 <ArticleTextField field="reorderPoint" form={form} label="Point de commande" updateField={updateField} />
                 <ArticleTextField field="stock" form={form} label="Stock initial" updateField={updateField} />
-                <ArticleSelectField field="valuationMethod" form={form} label="Méthode de valorisation" options={["FIFO", "CUMP", "LIFO", "Standard"]} updateField={updateField} />
+                <ArticleSelectField field="valuationMethod" form={form} label="Méthode de valorisation" onCreateOption={(value) => addSelectionOption("valuationMethod", value)} options={selectOptions.valuationMethod} updateField={updateField} />
                 <ArticleCheckboxField field="managedStock" form={form} label="Article géré en stock" updateField={updateField} />
                 <ArticleCheckboxField field="trackLocation" form={form} label="Article suivi par emplacement" updateField={updateField} />
               </ArticleFormSection>
@@ -2488,7 +2587,7 @@ function ArticleFormWorkspace({
           {activeTab === "Fournisseurs" ? (
             <div className="article-form-sections">
               <ArticleFormSection title="Fournisseurs">
-                <ArticleSelectField field="supplier" form={form} label="Fournisseur principal" options={["PHARMA CI", "MedEquip", "Dakar Pharma", "BioPharma"]} updateField={updateField} />
+                <ArticleSelectField field="supplier" form={form} label="Fournisseur principal" onCreateOption={(value) => addSelectionOption("supplier", value)} options={selectOptions.supplier} updateField={updateField} />
                 <ArticleTextField field="manufacturerRef" form={form} label="Référence fournisseur" updateField={updateField} />
                 <ArticleTextField field="purchasePrice" form={form} label="Prix achat" updateField={updateField} />
               </ArticleFormSection>
@@ -2534,6 +2633,12 @@ function ArticleFormWorkspace({
               </ArticleFormSection>
             </div>
           ) : null}
+
+          <ArticleCustomFieldSection
+            activeTab={activeTab}
+            fields={customFields[activeTab] ?? []}
+            onChange={(id, value) => updateCustomField(activeTab, id, value)}
+          />
         </section>
 
         <aside className="article-create-side">
@@ -2613,6 +2718,38 @@ function ArticleFormSection({ children, title }: { children: ReactNode; title: s
   );
 }
 
+function ArticleCustomFieldSection({
+  activeTab,
+  fields,
+  onChange
+}: {
+  activeTab: string;
+  fields: Array<{ id: string; label: string; value: string }>;
+  onChange: (id: string, value: string) => void;
+}) {
+  if (fields.length === 0) {
+    return (
+      <section className="article-custom-fields-empty">
+        <strong>Aucun champ personnalisé sur {activeTab}</strong>
+        <small>Utilisez le configurateur pour ajouter une donnée propre à votre organisation.</small>
+      </section>
+    );
+  }
+
+  return (
+    <section className="article-form-sections">
+      <ArticleFormSection title={`Champs personnalisés - ${activeTab}`}>
+        {fields.map((field) => (
+          <label key={field.id}>
+            <span>{field.label}</span>
+            <input onChange={(event) => onChange(field.id, event.target.value)} value={field.value} />
+          </label>
+        ))}
+      </ArticleFormSection>
+    </section>
+  );
+}
+
 function ArticleTextField({
   field,
   form,
@@ -2657,22 +2794,49 @@ function ArticleSelectField({
   field,
   form,
   label,
+  onCreateOption,
   options,
   updateField
 }: {
   field: ArticleFormField;
   form: ArticleFormState;
   label: string;
+  onCreateOption?: (value: string) => void;
   options: string[];
   updateField: (field: ArticleFormField, value: string | boolean) => void;
 }) {
+  const [newOption, setNewOption] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+
   return (
-    <label>
-      <span>{label}</span>
-      <select onChange={(event) => updateField(field, event.target.value)} value={String(form[field])}>
-        {options.map((option) => <option key={option}>{option}</option>)}
-      </select>
-    </label>
+    <div className="enrichable-select">
+      <label>
+        <span>{label}</span>
+        <select onChange={(event) => updateField(field, event.target.value)} value={String(form[field])}>
+          {options.map((option) => <option key={option}>{option}</option>)}
+        </select>
+      </label>
+      {onCreateOption ? (
+        <button onClick={() => setIsCreating((current) => !current)} type="button">
+          {isCreating ? "Fermer" : "+ Créer"}
+        </button>
+      ) : null}
+      {isCreating ? (
+        <div>
+          <input onChange={(event) => setNewOption(event.target.value)} placeholder={`Nouvelle valeur ${label.toLowerCase()}`} value={newOption} />
+          <button
+            onClick={() => {
+              onCreateOption?.(newOption);
+              setNewOption("");
+              setIsCreating(false);
+            }}
+            type="button"
+          >
+            Enregistrer
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
