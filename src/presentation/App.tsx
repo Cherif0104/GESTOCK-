@@ -98,6 +98,88 @@ const navigationItems = [
   "Paramètres"
 ];
 
+type GuidedTourTarget =
+  | "organization"
+  | "navigation"
+  | "search"
+  | "topbar"
+  | "dashboard"
+  | "articles"
+  | "catalogue"
+  | "modules";
+
+interface GuidedTourStep {
+  target: GuidedTourTarget;
+  eyebrow: string;
+  title: string;
+  description: string;
+  instruction: string;
+  nav?: string;
+}
+
+const guidedTourSteps: GuidedTourStep[] = [
+  {
+    target: "organization",
+    eyebrow: "Contexte de travail",
+    title: "Verifier l'organisation active",
+    description: "GESTOCK est multi-tenant : chaque utilisateur travaille dans une organisation, une filiale ou un site donne.",
+    instruction: "Cliquez ici si vous voulez changer d'organisation ou montrer le parcours multi-filiales."
+  },
+  {
+    target: "navigation",
+    eyebrow: "Navigation ERP",
+    title: "Utiliser le menu lateral",
+    description: "Le menu donne acces aux modules : Tableau de bord, Articles, Catalogue, Stocks, Entrees, Sorties et autres espaces ERP.",
+    instruction: "Survolez la sidebar pour l'ouvrir, puis cliquez sur le module que vous voulez tester."
+  },
+  {
+    target: "search",
+    eyebrow: "Recherche globale",
+    title: "Rechercher dans la plateforme",
+    description: "La barre de recherche permet de simuler une recherche globale sur articles, references, commandes ou fournisseurs.",
+    instruction: "Tapez un mot-cle puis appuyez sur Entree pour declencher une recherche mock."
+  },
+  {
+    target: "topbar",
+    eyebrow: "Header interactif",
+    title: "Tester notifications, messages et profil",
+    description: "Les icones du haut ouvrent les panneaux de notifications, messages et compte utilisateur.",
+    instruction: "Cliquez sur la cloche, l'enveloppe ou le profil utilisateur pour voir les panneaux interactifs."
+  },
+  {
+    target: "dashboard",
+    eyebrow: "Vue executif",
+    title: "Explorer le dashboard",
+    description: "Le dashboard montre les KPI, alertes, mouvements et analyses de stock avec donnees simulees.",
+    instruction: "Cliquez sur les KPI, changez la periode et traitez une alerte pour montrer que le tableau de bord reagit.",
+    nav: "Tableau de bord"
+  },
+  {
+    target: "articles",
+    eyebrow: "Module operationnel",
+    title: "Tester le module Articles",
+    description: "Articles gere l'objet stockable : fiche detaillee, creation, edition, images, codes-barres, documents et audit.",
+    instruction: "Cliquez sur Articles, ouvrez une fiche, puis testez creation, modification, onglets, scan ou images.",
+    nav: "Articles"
+  },
+  {
+    target: "catalogue",
+    eyebrow: "Master Data Produit",
+    title: "Tester le module Catalogue",
+    description: "Catalogue sert au referentiel produit : produits maitres, familles, marques, attributs, variantes, kits et classifications.",
+    instruction: "Cliquez sur Catalogue, modifiez un produit maitre ou creez une nouvelle reference MDM.",
+    nav: "Catalogue"
+  },
+  {
+    target: "modules",
+    eyebrow: "Vision globale",
+    title: "Presenter les modules restants",
+    description: "Les autres modules montrent la couverture cible : stocks, mouvements, achats, inventaires, entrepots, rapports et parametres.",
+    instruction: "Cliquez sur Stocks, Entrees, Sorties ou Inventaires pour expliquer la feuille de route fonctionnelle.",
+    nav: "Stocks"
+  }
+];
+
 const recentMovements = [
   ["31/05/2024", "Réception", "REC-00045", "Paracétamol 500mg", "Entrepôt Dakar", "+ 2 500", "Amadou Diop"],
   ["31/05/2024", "Sortie", "SOR-00123", "Gants médicaux", "Entrepôt Thiès", "- 1 000", "Fatou Ndiaye"],
@@ -1242,22 +1324,48 @@ function DashboardScreen({
   const [readMessageIds, setReadMessageIds] = useState<string[]>([]);
   const [topbarSearch, setTopbarSearch] = useState("");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const [tourOpen, setTourOpen] = useState(false);
+  const [activeTourStep, setActiveTourStep] = useState(0);
+  const currentTourStep = guidedTourSteps[activeTourStep];
   const searchPlaceholder =
     activeNav === "Articles"
       ? selectedArticle
         ? "Rechercher (articles, commandes, fournisseurs...)"
         : "Rechercher (articles, références, codes-barres...)"
       : "Rechercher (articles, commandes, fournisseurs...)";
+  const isTourTarget = (target: GuidedTourTarget) => tourOpen && currentTourStep.target === target;
+  const goToTourStep = (stepIndex: number) => {
+    const nextIndex = Math.max(0, Math.min(guidedTourSteps.length - 1, stepIndex));
+    const nextStep = guidedTourSteps[nextIndex];
+
+    setTourOpen(true);
+    setActiveTourStep(nextIndex);
+    setOpenTopbarPanel(null);
+
+    if (nextStep.target === "organization" || nextStep.target === "navigation" || nextStep.target === "modules") {
+      setSidebarExpanded(true);
+    }
+
+    if (nextStep.nav) {
+      onNav(nextStep.nav);
+      if (nextStep.nav !== "Articles") {
+        setSelectedArticle(null);
+      }
+      if (nextStep.nav !== "Catalogue") {
+        setSelectedCatalogProduct(null);
+      }
+    }
+  };
 
   return (
-    <main className={`erp-shell ${sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"}`}>
+    <main className={`erp-shell ${sidebarExpanded ? "sidebar-expanded" : "sidebar-collapsed"} ${tourOpen ? "tour-running" : ""}`}>
       <aside
-        className="erp-sidebar"
+        className={`erp-sidebar ${isTourTarget("navigation") || isTourTarget("modules") ? "tour-highlight" : ""}`}
         onMouseEnter={() => setSidebarExpanded(true)}
         onMouseLeave={() => setSidebarExpanded(false)}
       >
         <Logo className="erp-logo" />
-        <button className="erp-org-switch" onClick={onSwitchOrganization} type="button">
+        <button className={`erp-org-switch ${isTourTarget("organization") ? "tour-highlight" : ""}`} onClick={onSwitchOrganization} type="button">
           <span className="org-cube" />
           <span>
             <strong>{organization.name}</strong>
@@ -1298,13 +1406,13 @@ function DashboardScreen({
       </aside>
 
       <section className="erp-main">
-        <header className="erp-topbar">
+        <header className={`erp-topbar ${isTourTarget("topbar") ? "tour-highlight" : ""}`}>
           {!sidebarExpanded ? (
             <button className="sidebar-toggle" onClick={() => setSidebarExpanded(true)} type="button">
               ☰
             </button>
           ) : null}
-          <label>
+          <label className={isTourTarget("search") ? "tour-highlight" : ""}>
             <span>⌕</span>
             <input
               onChange={(event) => setTopbarSearch(event.target.value)}
@@ -1318,7 +1426,7 @@ function DashboardScreen({
             />
             <kbd>Ctrl + K</kbd>
           </label>
-          <div className="topbar-actions">
+          <div className={`topbar-actions ${isTourTarget("topbar") ? "tour-highlight" : ""}`}>
             <button
               className={openTopbarPanel === "notifications" ? "active" : ""}
               onClick={() => setOpenTopbarPanel(openTopbarPanel === "notifications" ? null : "notifications")}
@@ -1335,7 +1443,13 @@ function DashboardScreen({
               <span className="topbar-icon topbar-icon-mail" aria-hidden="true" />
               <em>{Math.max(0, 5 - readMessageIds.length)}</em>
             </button>
-            <button onClick={() => onAction("Aide contextuelle du dashboard.")} type="button">
+            <button
+              aria-label="Demarrer le guide de demonstration"
+              className={tourOpen ? "active" : ""}
+              onClick={() => goToTourStep(0)}
+              title="Guide de demonstration"
+              type="button"
+            >
               <span className="topbar-icon topbar-icon-help" aria-hidden="true" />
             </button>
             <button
@@ -1370,7 +1484,23 @@ function DashboardScreen({
           />
         ) : null}
 
-        <div className="dashboard-page">
+        {tourOpen ? (
+          <GuidedTourPanel
+            onClose={() => setTourOpen(false)}
+            onNext={() => activeTourStep === guidedTourSteps.length - 1 ? setTourOpen(false) : goToTourStep(activeTourStep + 1)}
+            onPrevious={() => goToTourStep(activeTourStep - 1)}
+            onStepSelect={goToTourStep}
+            step={currentTourStep}
+            stepIndex={activeTourStep}
+            totalSteps={guidedTourSteps.length}
+          />
+        ) : null}
+
+        <div
+          className={`dashboard-page ${
+            isTourTarget("dashboard") || isTourTarget("articles") || isTourTarget("catalogue") ? "tour-highlight" : ""
+          }`}
+        >
           {notice ? (
             <p className="workspace-notice">
               {notice}
@@ -1419,6 +1549,73 @@ function DashboardScreen({
         </div>
       </section>
     </main>
+  );
+}
+
+function GuidedTourPanel({
+  onClose,
+  onNext,
+  onPrevious,
+  onStepSelect,
+  step,
+  stepIndex,
+  totalSteps
+}: {
+  onClose: () => void;
+  onNext: () => void;
+  onPrevious: () => void;
+  onStepSelect: (stepIndex: number) => void;
+  step: GuidedTourStep;
+  stepIndex: number;
+  totalSteps: number;
+}) {
+  return (
+    <aside className="guided-tour-panel" aria-live="polite">
+      <header>
+        <div>
+          <span>{step.eyebrow}</span>
+          <h2>{step.title}</h2>
+        </div>
+        <button aria-label="Fermer le guide" onClick={onClose} type="button">×</button>
+      </header>
+
+      <div className="guided-tour-progress" aria-label={`Etape ${stepIndex + 1} sur ${totalSteps}`}>
+        <strong>{stepIndex + 1}</strong>
+        <div>
+          <span style={{ width: `${((stepIndex + 1) / totalSteps) * 100}%` }} />
+        </div>
+        <small>{totalSteps}</small>
+      </div>
+
+      <p>{step.description}</p>
+
+      <section>
+        <strong>Action a effectuer</strong>
+        <p>{step.instruction}</p>
+      </section>
+
+      <ol>
+        {guidedTourSteps.map((tourStep, index) => (
+          <li key={tourStep.title}>
+            <button
+              className={index === stepIndex ? "active" : ""}
+              onClick={() => onStepSelect(index)}
+              type="button"
+            >
+              <span>{index + 1}</span>
+              {tourStep.title}
+            </button>
+          </li>
+        ))}
+      </ol>
+
+      <footer>
+        <button disabled={stepIndex === 0} onClick={onPrevious} type="button">Precedent</button>
+        <button className="primary" onClick={onNext} type="button">
+          {stepIndex === totalSteps - 1 ? "Terminer" : "Suivant"}
+        </button>
+      </footer>
+    </aside>
   );
 }
 
