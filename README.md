@@ -93,6 +93,11 @@ La simulation des comptes de test et du routage post-login est documentée ici :
 
 - [`docs/mock-auth-routing.md`](docs/mock-auth-routing.md)
 
+Pour une présentation client de la démonstration, utiliser :
+
+- [`docs/demo-user-guide.md`](docs/demo-user-guide.md)
+- [`docs/client-demo-message.md`](docs/client-demo-message.md)
+
 Les frontières fonctionnelles définitives entre Article, Catalogue, Stock,
 Entrées, Sorties, Transferts, Inventaires et Lots & Séries sont verrouillées
 ici :
